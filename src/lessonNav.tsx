@@ -12,33 +12,40 @@ export type NavArea='8대 공정'|'장비'|'설계';
 
 export function LessonNav({current,area,onSwitch}:{current:NavLesson;area:NavArea;onSwitch?:(id:NavLesson)=>void}){
  const[open,setOpen]=useState(false),root=useRef<HTMLDivElement>(null);
- useEffect(()=>{if(!open)return;const down=(e:PointerEvent)=>{if(!root.current?.contains(e.target as Node))setOpen(false)};const key=(e:KeyboardEvent)=>{if(e.key==='Escape'){setOpen(false);root.current?.querySelector<HTMLButtonElement>('.lesson-nav-btn')?.focus()}};document.addEventListener('pointerdown',down);document.addEventListener('keydown',key);return()=>{document.removeEventListener('pointerdown',down);document.removeEventListener('keydown',key)}},[open]);
+ useEffect(()=>{if(!open)return;const down=(e:PointerEvent)=>{if(!root.current?.contains(e.target as Node))setOpen(false)};const key=(e:KeyboardEvent)=>{if(e.key==='Escape'){setOpen(false);root.current?.querySelector<HTMLButtonElement>('.lesson-nav-trigger')?.focus()}};document.addEventListener('pointerdown',down);document.addEventListener('keydown',key);return()=>{document.removeEventListener('pointerdown',down);document.removeEventListener('keydown',key)}},[open]);
  if(!onSwitch)return null;
  const list=area==='8대 공정'?processes:area==='장비'?equipment:design;
  const label=(p:Item)=>p.no?`제${p.no}공정 · ${p.name}`:p.name;
- const cur=list.find(p=>p.id===current);
+ /* 피그마 파일 이름 옆 ⌄ 처럼: 제목 옆 작은 화살표를 누르면 같은 분야의 학습 목록이 열려요 */
  return <div ref={root} className="lesson-nav">
-  <button type="button" className="lesson-nav-btn" aria-haspopup="listbox" aria-expanded={open} onClick={()=>setOpen(v=>!v)}><span className="lesson-nav-label">{area}</span><b>{cur?label(cur):'학습 선택'}</b><Icon name="chevron-down" className="lesson-nav-chev"/></button>
-  {open&&<ul className="lesson-nav-menu" role="listbox" aria-label={`${area} 학습`}>{list.map(p=><li key={label(p)} role="option" aria-selected={p.id===current} aria-disabled={!p.id||undefined}><button type="button" disabled={!p.id} onClick={()=>{setOpen(false);if(p.id&&p.id!==current)onSwitch(p.id)}}><span>{label(p)}</span>{!p.id&&<small>준비 중</small>}{p.id===current&&<Icon name="check2"/>}</button></li>)}</ul>}
+  <button type="button" className="lesson-nav-trigger" aria-haspopup="listbox" aria-expanded={open} aria-label={`${area} 다른 학습 보기`} data-tip={`${area} 목록`} data-tip-pos="bottom" onClick={()=>setOpen(v=>!v)}><Icon name="chevron-down"/></button>
+  {open&&<ul className="lesson-nav-menu" role="listbox" aria-label={`${area} 학습`}><li className="lesson-nav-head" aria-hidden="true">{area}</li>{list.map(p=><li key={label(p)} role="option" aria-selected={p.id===current} aria-disabled={!p.id||undefined}><button type="button" disabled={!p.id} onClick={()=>{setOpen(false);if(p.id&&p.id!==current)onSwitch(p.id)}}><Icon name="check2" className="lesson-nav-check"/><span>{label(p)}</span>{!p.id&&<small>준비 중</small>}</button></li>)}</ul>}
  </div>;
 }
 
-/* 대표 관련 기업 — '이 학습에 대해'처럼 접고 펴는 항목 */
-export type Company={name:string;role:string};
+/* 대표 관련 기업 — 접고 펴는 항목 안에 3열 기업 카드
+   로고: public/logos/<logo>.svg 또는 .png 파일을 넣으면 카드에 보여요(각 회사의 공식 미디어 키트 로고를 쓰세요).
+   파일이 없으면 회사 이니셜 배지를 대신 보여줘요. */
+export type Company={name:string;en:string;field:string;country:string;mark:string;logo:string};
+const C=(name:string,en:string,field:string,country:string,mark:string,logo:string):Company=>({name,en,field,country,mark,logo});
 export const lessonCompanies:Record<string,Company[]>={
- wafer:[{name:'SK실트론',role:'실리콘 웨이퍼 제조 · 한국'},{name:'신에츠화학',role:'실리콘 웨이퍼 제조 · 일본'},{name:'SUMCO',role:'실리콘 웨이퍼 제조 · 일본'},{name:'글로벌웨이퍼스',role:'실리콘 웨이퍼 제조 · 대만'},{name:'실트로닉',role:'실리콘 웨이퍼 제조 · 독일'}],
- oxidation:[{name:'도쿄일렉트론(TEL)',role:'산화 · 확산 퍼니스 장비 · 일본'},{name:'고쿠사이 일렉트릭',role:'배치형 열처리 장비 · 일본'},{name:'ASM 인터내셔널',role:'퍼니스 · 증착 장비 · 네덜란드'}],
- photo:[{name:'ASML',role:'노광 장비 · 네덜란드'},{name:'니콘 · 캐논',role:'노광 장비 · 일본'},{name:'도쿄일렉트론(TEL)',role:'PR 도포 · 현상 트랙 장비 · 일본'},{name:'JSR · 도쿄오카공업(TOK)',role:'포토레지스트 · 일본'},{name:'동진쎄미켐',role:'포토레지스트 · 한국'}],
- ffu:[{name:'Camfil',role:'FFU · 공기 필터 · 스웨덴'},{name:'신성이엔지',role:'FFU · 클린룸 설비 · 한국'},{name:'AAF 인터내셔널',role:'공기 필터 · 미국'}],
- rie:[{name:'램리서치(Lam Research)',role:'식각 장비 · 미국'},{name:'도쿄일렉트론(TEL)',role:'식각 장비 · 일본'},{name:'어플라이드 머티어리얼즈',role:'식각 · 증착 장비 · 미국'},{name:'히타치 하이테크',role:'식각 장비 · 일본'},{name:'옥스퍼드 인스트루먼트',role:'연구용 플라즈마 식각 장비 · 영국'}],
- mosfet:[{name:'삼성전자',role:'메모리 · 파운드리 · 한국'},{name:'SK하이닉스',role:'메모리 · 한국'},{name:'TSMC',role:'파운드리 · 대만'},{name:'인텔',role:'프로세서 설계 · 제조 · 미국'},{name:'시놉시스 · 케이던스',role:'반도체 설계 소프트웨어(EDA) · 미국'}],
- circuit:[{name:'텍사스 인스트루먼트(TI)',role:'논리 IC · 아날로그 칩 · 미국'},{name:'르네사스',role:'마이크로컨트롤러 · 일본'},{name:'인피니언',role:'전력 반도체 · 마이크로컨트롤러 · 독일'},{name:'Arm',role:'프로세서 설계 · 영국'}],
+ wafer:[C('SK실트론','SK siltron','실리콘 웨이퍼','한국','SK','sk-siltron'),C('신에츠화학','Shin-Etsu','실리콘 웨이퍼','일본','SE','shin-etsu'),C('SUMCO','SUMCO','실리콘 웨이퍼','일본','SU','sumco'),C('글로벌웨이퍼스','GlobalWafers','실리콘 웨이퍼','대만','GW','globalwafers'),C('실트로닉','Siltronic','실리콘 웨이퍼','독일','SI','siltronic')],
+ oxidation:[C('도쿄일렉트론','TEL','산화 · 확산 퍼니스','일본','TEL','tel'),C('고쿠사이 일렉트릭','KOKUSAI ELECTRIC','배치형 열처리 장비','일본','KE','kokusai-electric'),C('ASM 인터내셔널','ASM','퍼니스 · 증착 장비','네덜란드','ASM','asm')],
+ photo:[C('ASML','ASML','노광 장비','네덜란드','ASML','asml'),C('니콘','Nikon','노광 장비','일본','NI','nikon'),C('캐논','Canon','노광 장비','일본','CA','canon'),C('도쿄일렉트론','TEL','PR 도포 · 현상 트랙','일본','TEL','tel'),C('JSR','JSR','포토레지스트','일본','JSR','jsr'),C('도쿄오카공업','TOK','포토레지스트','일본','TOK','tok'),C('동진쎄미켐','Dongjin Semichem','포토레지스트','한국','DJ','dongjin')],
+ ffu:[C('캄필','Camfil','FFU · 공기 필터','스웨덴','CF','camfil'),C('신성이엔지','Shinsung E&G','FFU · 클린룸 설비','한국','SS','shinsung'),C('AAF 인터내셔널','AAF','공기 필터','미국','AAF','aaf')],
+ rie:[C('램리서치','Lam Research','식각 장비','미국','LAM','lam-research'),C('도쿄일렉트론','TEL','식각 장비','일본','TEL','tel'),C('어플라이드 머티어리얼즈','Applied Materials','식각 · 증착 장비','미국','AM','applied-materials'),C('히타치 하이테크','Hitachi High-Tech','식각 장비','일본','HH','hitachi-high-tech'),C('옥스퍼드 인스트루먼트','Oxford Instruments','연구용 플라즈마 식각','영국','OI','oxford-instruments')],
+ mosfet:[C('삼성전자','Samsung Electronics','메모리 · 파운드리','한국','SA','samsung'),C('SK하이닉스','SK hynix','메모리','한국','SKH','sk-hynix'),C('TSMC','TSMC','파운드리','대만','TSMC','tsmc'),C('인텔','Intel','프로세서 설계 · 제조','미국','IN','intel'),C('시놉시스','Synopsys','반도체 설계 SW(EDA)','미국','SY','synopsys'),C('케이던스','Cadence','반도체 설계 SW(EDA)','미국','CD','cadence')],
+ circuit:[C('텍사스 인스트루먼트','Texas Instruments','논리 IC · 아날로그 칩','미국','TI','texas-instruments'),C('르네사스','Renesas','마이크로컨트롤러','일본','RE','renesas'),C('인피니언','Infineon','전력 반도체 · MCU','독일','IF','infineon'),C('Arm','Arm','프로세서 설계','영국','ARM','arm')],
 };
+function CompanyLogo({c}:{c:Company}){
+ const[src,setSrc]=useState<string|null>(`logos/${c.logo}.svg`);
+ return <span className="company-logo" aria-hidden="true">{src?<img src={src} alt="" loading="lazy" onError={()=>setSrc(s=>s?.endsWith('.svg')?`logos/${c.logo}.png`:null)}/>:<span className="company-mark" data-len={c.mark.length}>{c.mark}</span>}</span>;
+}
 export function LessonCompanies({id}:{id:string}){
  const list=lessonCompanies[id];if(!list?.length)return null;
  return <details className="glb-about lesson-companies"><summary>대표 관련 기업</summary>
-  <ul className="lesson-company-list">{list.map(c=><li key={c.name}><Icon name="box" className="lead"/><span><b>{c.name}</b><small>{c.role}</small></span></li>)}</ul>
-  <p className="glb-note">학습을 돕기 위한 예시 목록이에요. 순서는 순위와 관계없어요.</p>
+  <ul className="company-grid">{list.map(c=><li key={c.name+c.field} className="company-card" title={`${c.name} (${c.en}) · ${c.field} · ${c.country}`}><CompanyLogo c={c}/><b>{c.name}</b><small>{c.field}</small><span className="company-country">{c.country}</span></li>)}</ul>
+  <p className="glb-note">학습을 돕기 위한 예시 목록이에요. 순서는 순위와 관계없어요. 로고는 각 회사의 상표예요.</p>
  </details>;
 }
 

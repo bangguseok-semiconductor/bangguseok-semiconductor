@@ -241,3 +241,13 @@
 :root :is(.btn.__eq,.ws-side .ws-learn):not(#z){background:var(--c-surface-2)!important;color:var(--c-ink)!important;border:1px solid var(--c-line)!important;box-shadow:none!important}
 :root :is(.btn.__eq,.ws-side .ws-learn):not(#z):hover:not(:disabled){background:var(--c-selected)!important}
 :root :is(.btn.__eq,.ws-side .ws-learn):not(#z):active:not(:disabled){background:var(--c-pressed)!important}
+
+/* 전체 메뉴(오른쪽 위 ☰)의 항목: 어느 화면에서든 버튼이 아니라 '메뉴 줄' — 배경 없음 · 왼쪽 정렬 · 글자에 맞춘 너비 */
+:root :is(.btn.__eq,.menu-wrap .dropdown button):not(#z){display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:var(--sp-2)!important;width:100%!important;height:36px!important;min-height:0!important;margin:0!important;padding:0 var(--sp-4) 0 var(--sp-3)!important;border:0!important;border-radius:var(--r-sm)!important;background:transparent!important;color:var(--c-ink)!important;font-size:var(--fs-ui)!important;font-weight:var(--fw-medium)!important;box-shadow:none!important;transform:none!important;white-space:nowrap}
+:root :is(.btn.__eq,.menu-wrap .dropdown button):not(#z):hover:not(:disabled){background:var(--c-hover)!important}
+:root :is(.btn.__eq,.menu-wrap .dropdown button):not(#z):active:not(:disabled){background:var(--c-pressed)!important}
+:root :is(.btn.__eq,.menu-wrap .dropdown button[aria-current=page]):not(#z){background:var(--c-selected)!important;color:var(--c-ink)!important;opacity:1!important;font-weight:var(--fw-semibold)!important}
+:root :is(.btn.__eq,.menu-wrap .dropdown .menu-logout):not(#z){color:var(--c-ink-2)!important}
+.menu-wrap .dropdown{background:var(--c-surface)!important;color:var(--c-ink)}
+.menu-wrap .dropdown button svg.bi{width:16px!important;height:16px!important;color:var(--c-ink-2)!important}
+.menu-wrap .dropdown hr{margin:4px 0!important;border:0!important;border-top:1px solid var(--c-line)!important}

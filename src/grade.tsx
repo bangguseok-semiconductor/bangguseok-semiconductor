@@ -1,4 +1,5 @@
 import {useEffect,useRef,useState,useSyncExternalStore} from 'react';
+import {uiZoom} from './uiZoom';
 
 /* 등급(명패) — 퀴즈를 모두 맞힌 횟수(성공한 공정 수)에 따라 바뀌어요.
    만점 기록은 recordPass(id)로 남기고, 이 브라우저에만 저장돼요. */
@@ -24,7 +25,7 @@ export function usePassedCount(){return useSyncExternalStore(l=>{listeners.add(l
 /** 명패 칩 — 누르면 등급 안내가 열려요 */
 export function GradeChip({count}:{count:number}){
  const grade=gradeFor(count),[open,setOpen]=useState(false),[pos,setPos]=useState<{top:number;left:number}|null>(null),root=useRef<HTMLSpanElement>(null);
- const toggle=()=>{const r=root.current?.getBoundingClientRect();if(r){const w=Math.min(352,window.innerWidth-16);setPos({top:r.bottom+8,left:Math.max(8,Math.min(r.left,window.innerWidth-w-8))})}setOpen(o=>!o)};
+ const toggle=()=>{const z=uiZoom(),r0=root.current?.getBoundingClientRect(),r=r0&&{bottom:r0.bottom/z,left:r0.left/z};const vw=window.innerWidth/z;if(r){const w=Math.min(352,vw-16);setPos({top:r.bottom+8,left:Math.max(8,Math.min(r.left,vw-w-8))})}setOpen(o=>!o)};
  useEffect(()=>{if(!open)return;const key=(e:KeyboardEvent)=>{if(e.key==='Escape'){setOpen(false);root.current?.querySelector('button')?.focus()}};const down=(e:PointerEvent)=>{if(!root.current?.contains(e.target as Node))setOpen(false)};document.addEventListener('keydown',key);document.addEventListener('pointerdown',down);return()=>{document.removeEventListener('keydown',key);document.removeEventListener('pointerdown',down)}},[open]);
  return <span ref={root} className="grade-wrap">
   <button type="button" className="grade-chip" data-grade={grade.id} aria-expanded={open} aria-label={`등급 ${grade.name}, 등급 안내 보기`} onClick={toggle}>{grade.name}</button>

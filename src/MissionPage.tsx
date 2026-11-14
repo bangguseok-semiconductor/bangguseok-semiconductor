@@ -1,4 +1,5 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
+import {uiZoom} from './uiZoom';
 import type {ReactNode,DragEvent} from 'react';
 import {Icon} from './Icon';
 import {StudyHub} from './StudyHub';
@@ -27,7 +28,7 @@ export function MissionPage({lesson,profile,onExit,onLearn}:{lesson:MissionLesso
  const heading=useRef<HTMLHeadingElement>(null);
  /* 메모 패널 너비: 왼쪽 가장자리를 끌어 줄이고 늘려요(300~560px, 화면을 넘지 않게). 이 브라우저에 기억해요. */
  const[memoW,setMemoW]=useState(()=>{try{const n=Number(localStorage.getItem('semilab.mission.memoW'));return n>=300&&n<=560?n:364}catch{return 364}});
- const fitW=(w:number)=>Math.round(Math.max(300,Math.min(560,window.innerWidth-120,w))/4)*4;
+ const fitW=(w:number)=>Math.round(Math.max(300,Math.min(560,window.innerWidth/uiZoom()-120,w))/4)*4;
  const memoDrag=useRef<{x:number;w:number}|null>(null);
  const saveW=(w:number)=>{setMemoW(w);try{localStorage.setItem('semilab.mission.memoW',String(w))}catch{}};
  useEffect(()=>{heading.current?.focus({preventScroll:true})},[phase,at]);
@@ -107,7 +108,7 @@ export function MissionPage({lesson,profile,onExit,onLearn}:{lesson:MissionLesso
   {memoOpen&&<aside id="mission-memo" className="mission-memo shell-page" aria-label="학습 메모와 AI 어시스턴스" style={{width:fitW(memoW)}}>
    <div className="mission-memo-resizer" role="separator" aria-orientation="vertical" aria-label="메모 패널 너비" aria-valuemin={300} aria-valuemax={560} aria-valuenow={fitW(memoW)} tabIndex={0} title="끌어서 너비 조절 · 두 번 누르면 기본 너비"
     onPointerDown={e=>{if(e.button!==0)return;memoDrag.current={x:e.clientX,w:fitW(memoW)};e.currentTarget.setPointerCapture?.(e.pointerId);e.currentTarget.dataset.dragging='true'}}
-    onPointerMove={e=>{const d=memoDrag.current;if(d)setMemoW(fitW(d.w+(d.x-e.clientX)))}}
+    onPointerMove={e=>{const d=memoDrag.current;if(d)setMemoW(fitW(d.w+(d.x-e.clientX)/uiZoom()))}}
     onPointerUp={e=>{if(memoDrag.current){memoDrag.current=null;delete e.currentTarget.dataset.dragging;saveW(fitW(memoW))}}}
     onDoubleClick={()=>saveW(364)}
     onKeyDown={e=>{const step=e.shiftKey?32:16;if(e.key==='ArrowLeft'){e.preventDefault();saveW(fitW(memoW+step))}else if(e.key==='ArrowRight'){e.preventDefault();saveW(fitW(memoW-step))}}}/>

@@ -1,3 +1,4 @@
+import {uiZoom} from './uiZoom';
 import {useEffect,useRef,useState,useSyncExternalStore} from 'react';
 import type {Ref,CSSProperties,PointerEvent as RPointerEvent,KeyboardEvent as RKeyboardEvent} from 'react';
 import {Icon,type IconName} from './Icon';
@@ -44,7 +45,7 @@ export function PanelToggle({side}:{side:ShellSide}){
 function PanelResizer({side,width}:{side:ShellSide;width:number}){
  const drag=useRef<{x:number;w:number}|null>(null),[dragging,setDragging]=useState(false);
  const down=(e:RPointerEvent<HTMLDivElement>)=>{if(e.button!==0)return;drag.current={x:e.clientX,w:width};e.currentTarget.setPointerCapture?.(e.pointerId);setDragging(true);document.body.classList.add('is-resizing')};
- const move=(e:RPointerEvent<HTMLDivElement>)=>{const d=drag.current;if(!d)return;const dx=e.clientX-d.x;setPanelWidth(side,side==='left'?d.w+dx:d.w-dx)};
+ const move=(e:RPointerEvent<HTMLDivElement>)=>{const d=drag.current;if(!d)return;const dx=(e.clientX-d.x)/uiZoom();setPanelWidth(side,side==='left'?d.w+dx:d.w-dx)};
  const up=()=>{drag.current=null;setDragging(false);document.body.classList.remove('is-resizing')};
  const key=(e:RKeyboardEvent<HTMLDivElement>)=>{const step=e.shiftKey?32:16;let n=width;if(e.key==='ArrowLeft')n+=side==='left'?-step:step;else if(e.key==='ArrowRight')n+=side==='left'?step:-step;else if(e.key==='Home')n=side==='left'?PANEL_MIN:PANEL_MIN_R;else if(e.key==='End')n=PANEL_MAX;else return;e.preventDefault();setPanelWidth(side,n)};
  return <div className={'panel-resizer panel-resizer-'+side} data-dragging={dragging||undefined} role="separator" aria-orientation="vertical" aria-label={(side==='left'?'왼쪽':'오른쪽')+' 패널 너비'} aria-valuemin={side==='left'?PANEL_MIN:PANEL_MIN_R} aria-valuemax={PANEL_MAX} aria-valuenow={width} tabIndex={0} title="끌어서 너비 조절 · 두 번 누르면 기본 너비" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onLostPointerCapture={up} onDoubleClick={()=>setPanelWidth(side,side==='left'?PANEL_DEFAULT.wl:PANEL_DEFAULT.wr)} onKeyDown={key}/>;

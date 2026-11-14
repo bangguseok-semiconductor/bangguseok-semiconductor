@@ -11,24 +11,24 @@
 .neighbor-card{border-color:#ffffff40}
 .catalog-track .selected-copy>div span:first-child{background:none!important;padding-left:0!important}
 /* 화면 높이에 맞춰 스크롤 없이 한 화면에 (너무 낮을 때만 스크롤) */
-.selection-page{min-height:100dvh;display:flex;flex-direction:column}
+.selection-page{min-height:calc(100dvh / var(--z,1));display:flex;flex-direction:column}
 .selection-page .selector-header{flex:none}
-.selection-page .selector-content{flex:1;display:flex;flex-direction:column;justify-content:center;padding-top:clamp(0px,1vh,16px);padding-bottom:clamp(8px,2vh,24px)}
+.selection-page .selector-content{flex:1;display:flex;flex-direction:column;justify-content:center;padding-top:clamp(0px,calc(1vh / var(--z,1)),16px);padding-bottom:clamp(8px,calc(2vh / var(--z,1)),24px)}
 .selection-page .selector-eyebrow{margin:0}
-.selection-page .selector-content h1{margin:clamp(4px,1vh,12px) 0 clamp(4px,.8vh,8px);font-size:clamp(24px,3.6vh,34px)}
+.selection-page .selector-content h1{margin:clamp(4px,calc(1vh / var(--z,1)),12px) 0 clamp(4px,calc(.8vh / var(--z,1)),8px);font-size:clamp(24px,calc(3.6vh / var(--z,1)),34px)}
 .selection-page .selector-subtitle{margin:0}
-.selection-catalog{margin-top:clamp(12px,2.4vh,24px)}
-.catalog-tabs{margin-bottom:clamp(8px,1.8vh,20px)}
-.catalog-caption{margin-bottom:clamp(8px,1.6vh,20px)}
-.catalog-preview{height:clamp(112px,calc(100dvh - 740px),260px)}
-.catalog-track .selected-copy{padding-top:clamp(12px,1.8vh,20px)}
+.selection-catalog{margin-top:clamp(12px,calc(2.4vh / var(--z,1)),24px)}
+.catalog-tabs{margin-bottom:clamp(8px,calc(1.8vh / var(--z,1)),20px)}
+.catalog-caption{margin-bottom:clamp(8px,calc(1.6vh / var(--z,1)),20px)}
+.catalog-preview{height:clamp(112px,calc(calc(100dvh / var(--z,1)) - 740px),260px)}
+.catalog-track .selected-copy{padding-top:clamp(12px,calc(1.8vh / var(--z,1)),20px)}
 .catalog-track .selected-copy p{min-height:0}
-.catalog-paging{margin-top:clamp(8px,1.6vh,20px)}
+.catalog-paging{margin-top:clamp(8px,calc(1.6vh / var(--z,1)),20px)}
 .catalog-hint{display:none}
-.catalog-actions.selector-actions{margin-top:clamp(8px,1.2vh,12px);margin-bottom:0}
+.catalog-actions.selector-actions{margin-top:clamp(8px,calc(1.2vh / var(--z,1)),12px);margin-bottom:0}
 /* ── 깊이 캐러셀 (react-bits Depth Carousel 방식) ── */
 .selection-track.catalog-track{display:block!important;position:relative;max-width:1180px!important;margin:0 auto;perspective:1600px;perspective-origin:50% 40%}
-.depth-slot{--o:0;--abs:0;position:absolute;top:0;left:50%;width:min(476px,38vw);height:100%;transform-style:preserve-3d;transform:translateX(calc(-50% + var(--o) * 66%)) translateZ(calc(var(--abs) * -120px)) rotateY(calc(var(--o) * -14deg)) scale(calc(1 - var(--abs) * .1));opacity:calc(1 - var(--abs) * .28);z-index:calc(10 - var(--abs));transition:transform .55s cubic-bezier(.2,.8,.2,1),opacity .45s ease,filter .45s ease}
+.depth-slot{--o:0;--abs:0;position:absolute;top:0;left:50%;width:min(476px,calc(38vw / var(--z,1)));height:100%;transform-style:preserve-3d;transform:translateX(calc(-50% + var(--o) * 66%)) translateZ(calc(var(--abs) * -120px)) rotateY(calc(var(--o) * -14deg)) scale(calc(1 - var(--abs) * .1));opacity:calc(1 - var(--abs) * .28);z-index:calc(10 - var(--abs));transition:transform .55s cubic-bezier(.2,.8,.2,1),opacity .45s ease,filter .45s ease}
 .depth-slot[data-offset="0"]{position:relative;left:auto;margin:0 auto;transform:none;opacity:1;height:auto}
 .depth-slot:not([data-offset="0"]){filter:saturate(.7)}
 .depth-slot:not([data-offset="0"]):hover{opacity:calc(1 - var(--abs) * .18);filter:none}
@@ -45,7 +45,7 @@
 /* ── 학습 선택 화면 규격 (타이포 6단계 · 4배수 간격) ──
    제목 36 / 카드 제목 24 / 탭·버튼 14 / 본문 14 / 보조 12 */
 svg.bi.flip{transform:scaleX(-1)}
-.selection-page .selector-content{padding-top:clamp(16px,4vh,40px)}
+.selection-page .selector-content{padding-top:clamp(16px,calc(4vh / var(--z,1)),40px)}
 .selection-page .selector-content>h1{margin:0 0 var(--sp-2)!important;font-size:var(--fs-display)!important;font-weight:var(--fw-semibold)!important;line-height:1.25!important;letter-spacing:0!important;color:var(--gray-0)!important}
 .selection-page .selector-subtitle{margin:0!important;font-size:var(--fs-body)!important;line-height:1.5!important;color:var(--gray-300)!important}
 .selection-page .catalog-tabs{gap:var(--sp-1)!important;margin:var(--sp-6) auto var(--sp-5,20px)!important;padding:var(--sp-1)!important;border:0!important;border-radius:var(--r-lg)!important;background:#ffffff1a!important;box-shadow:inset 0 0 0 1px #ffffff26!important;backdrop-filter:blur(12px)}
@@ -104,7 +104,7 @@ svg.bi.flip{transform:scaleX(-1)}
 @media(prefers-reduced-motion:reduce){.selection-page .catalog-selected[data-enter]{animation:none}.selection-page .depth-slot[data-offset="0"]{transform:none}}
 
 /* ── 원기둥 캐러셀 ── */
-.selection-page .catalog-ring-stage{position:relative;height:clamp(330px,44vh,410px);margin:var(--sp-2) auto 0;perspective:1500px;perspective-origin:50% 42%;touch-action:pan-y;cursor:grab;outline:none;user-select:none;-webkit-user-select:none}
+.selection-page .catalog-ring-stage{position:relative;height:clamp(330px,calc(44vh / var(--z,1)),410px);margin:var(--sp-2) auto 0;perspective:1500px;perspective-origin:50% 42%;touch-action:pan-y;cursor:grab;outline:none;user-select:none;-webkit-user-select:none}
 .selection-page .catalog-ring-stage[data-dragging]{cursor:grabbing}
 .selection-page .catalog-ring-stage.is-single{cursor:default}
 .selection-page .catalog-ring-stage:focus-visible{outline:2px solid #ffffff80;outline-offset:8px;border-radius:var(--r-lg)}
@@ -121,7 +121,7 @@ svg.bi.flip{transform:scaleX(-1)}
 .selection-page .catalog-glyph{display:grid;place-items:center;width:100%;height:100%;color:var(--gray-400)}
 .selection-page .ring-card .selected-copy{flex:1;min-height:0;display:flex;flex-direction:column;padding:var(--sp-4) var(--sp-1) 0!important}
 .selection-page .ring-card .selected-copy>div{margin-top:auto}
-@media(max-width:850px){.selection-page .catalog-ring-stage{height:min(420px,62vh)}}
+@media(max-width:850px){.selection-page .catalog-ring-stage{height:min(420px,calc(62vh / var(--z,1)))}}
 @media(prefers-reduced-motion:reduce){.catalog-ring,.ring-slot{transition:none}}
 /* 넘김 점: 모두 같은 크기의 원, 간격 4px, 색으로만 구분 */
 .selection-page .catalog-dots button,.selection-page .catalog-dots.selector-switch button.selected{width:10px!important;height:32px!important}
@@ -147,7 +147,7 @@ svg.bi.flip{transform:scaleX(-1)}
 .selection-page .ring-card .model-badge{font-size:var(--fs-caption)!important;padding:2px var(--sp-2)!important;border-radius:var(--r-sm)!important}
 
 /* ── 원기둥 캐러셀 v2: 그림 중심의 세로 카드, 설명은 아래에 한 번만 ── */
-.selection-page .catalog-ring-stage{height:clamp(300px,40vh,380px);perspective:1200px;perspective-origin:50% 50%;margin-top:var(--sp-4)}
+.selection-page .catalog-ring-stage{height:clamp(300px,calc(40vh / var(--z,1)),380px);perspective:1200px;perspective-origin:50% 50%;margin-top:var(--sp-4)}
 .ring-slot{height:auto;top:50%;transform-origin:50% 50%}
 .selection-page .ring-card{display:flex;flex-direction:column;width:100%;aspect-ratio:3/4;max-height:100%;margin-top:calc(var(--card-w) * -2 / 3);padding:0!important;border:0!important;border-radius:var(--r-xl)!important;background:var(--gray-0)!important;box-shadow:0 20px 44px -16px #0e111473!important;overflow:hidden;color:var(--gray-900);cursor:pointer}
 .selection-page .ring-slot[data-front] .ring-card{cursor:grab;box-shadow:0 32px 64px -20px #0e11148c,0 0 0 1px #ffffff26!important}
@@ -216,3 +216,7 @@ svg.bi.flip{transform:scaleX(-1)}
 
 /* 블렌더 렌더 이미지 카드 */
 .catalog-preview .catalog-thumb{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit;user-select:none;-webkit-user-drag:none;pointer-events:none}
+/* 어두운 화면 검색칸: 첫 화면 입력칸과 같은 선 규칙 */
+.catalog-search{background:#ffffff0d!important;box-shadow:inset 0 0 0 1px #cfd3d833!important;transition:box-shadow .15s var(--ease),width .2s var(--ease)}
+.catalog-search:hover{box-shadow:inset 0 0 0 1px #cfd3d859!important}
+.catalog-search:focus-within{box-shadow:inset 0 0 0 1px #ffffffa6!important}

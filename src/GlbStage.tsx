@@ -1,4 +1,5 @@
 import {useEffect,useRef,useState} from 'react';
+import {uiZoom} from './uiZoom';
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
@@ -84,7 +85,7 @@ export function GlbStage(p:Props){
   const measure=()=>{const W=el.clientWidth||1;if(window.innerWidth<=900)return {l:0,r:0};const b=el.getBoundingClientRect();
    const side=(id:string)=>{const p=document.getElementById(id);if(!p)return null;const r=p.getBoundingClientRect();return r.width>0&&getComputedStyle(p).display!=='none'?r:null};
    const lp=side('shell-panel-left'),rp=side('shell-panel-right');
-   return {l:Math.max(0,Math.min(W/2,lp?lp.right-b.left:0)),r:Math.max(0,Math.min(W/2,rp?b.right-rp.left:0))}};
+   const z=uiZoom();return {l:Math.max(0,Math.min(W/2,lp?(lp.right-b.left)/z:0)),r:Math.max(0,Math.min(W/2,rp?(b.right-rp.left)/z:0))}};
   const applyView=()=>{const W=el.clientWidth||1,H=el.clientHeight||1;const cx=vis.l+(W-vis.l-vis.r)/2;camera.setViewOffset(W,H,W/2-cx,0,W,H);camera.updateProjectionMatrix()};
   const fit=(root:THREE.Object3D)=>{
    const box=new THREE.Box3();const grow=()=>{root.updateMatrixWorld(true);box.union(new THREE.Box3().setFromObject(root))};

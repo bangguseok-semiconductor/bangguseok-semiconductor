@@ -1,4 +1,5 @@
 import {useEffect,useRef,useState} from 'react';
+import {uiZoom} from './uiZoom';
 import type {Ref,DragEvent} from 'react';
 import {Icon} from './Icon';
 import {NoteSheet} from './NoteSheet';
@@ -31,8 +32,8 @@ export function StudyHub({lesson,ai=true,primary,tab:ctrlTab,onTab}:{lesson:stri
  const onSelection=(text:string,point?:{x:number;y:number})=>{
   if(!ai||!text){setPick(null);return}
   const box=root.current?.getBoundingClientRect();if(!box)return;
-  const x=point?point.x-box.left:box.width/2,y=point?point.y-box.top:box.height-72;
-  setPick({text,x:Math.min(Math.max(x,72),box.width-72),y:Math.max(56,y-44)});
+  const z=uiZoom(),bw=box.width/z,bh=box.height/z,x=point?(point.x-box.left)/z:bw/2,y=point?(point.y-box.top)/z:bh-72;
+  setPick({text,x:Math.min(Math.max(x,72),bw-72),y:Math.max(56,y-44)});
  };
  const askAI=()=>{if(!pick)return;setDraft(d=>(d.trim()?d.trim()+'\n\n':'')+'“'+pick.text+'”\n');setPick(null);setTab('ai');setView('current');requestAnimationFrame(()=>{const t=ask.current;if(t){t.focus();t.setSelectionRange(t.value.length,t.value.length)}})};
 

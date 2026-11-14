@@ -1,4 +1,5 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
+import {uiZoom} from './uiZoom';
 import type {ReactNode,PointerEvent as RPointerEvent,KeyboardEvent as RKeyboardEvent,CSSProperties} from 'react';
 import {Icon,type IconName} from './Icon';
 import {tiltHandlers} from './tilt';
@@ -23,7 +24,7 @@ const readSide=()=>{try{const v=Number(localStorage.getItem('semilab.ws.sideW'))
 function SideResizer({width,onChange}:{width:number;onChange:(w:number)=>void}){
  const drag=useRef<{x:number;w:number}|null>(null),[dragging,setDragging]=useState(false);
  const down=(e:RPointerEvent<HTMLDivElement>)=>{if(e.button!==0)return;drag.current={x:e.clientX,w:width};e.currentTarget.setPointerCapture?.(e.pointerId);setDragging(true);document.body.classList.add('is-resizing')};
- const move=(e:RPointerEvent<HTMLDivElement>)=>{const d=drag.current;if(d)onChange(clampSide(d.w+e.clientX-d.x))};
+ const move=(e:RPointerEvent<HTMLDivElement>)=>{const d=drag.current;if(d)onChange(clampSide(d.w+(e.clientX-d.x)/uiZoom()))};
  const up=()=>{drag.current=null;setDragging(false);document.body.classList.remove('is-resizing')};
  const key=(e:RKeyboardEvent<HTMLDivElement>)=>{const st=e.shiftKey?32:16;let n=width;if(e.key==='ArrowLeft')n-=st;else if(e.key==='ArrowRight')n+=st;else if(e.key==='Home')n=SIDE_MIN;else if(e.key==='End')n=SIDE_MAX;else return;e.preventDefault();onChange(clampSide(n))};
  return <div className="panel-resizer ws-resizer" data-dragging={dragging||undefined} role="separator" aria-orientation="vertical" aria-label="목록 너비" aria-valuemin={SIDE_MIN} aria-valuemax={SIDE_MAX} aria-valuenow={width} tabIndex={0} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onKeyDown={key} onDoubleClick={()=>onChange(SIDE_DEF)} title="끌어서 너비 조절 · 두 번 누르면 처음 너비"/>;

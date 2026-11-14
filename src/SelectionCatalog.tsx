@@ -1,4 +1,5 @@
 import {Icon,type IconName} from './Icon';
+import {uiZoom} from './uiZoom';
 import type React from 'react';
 import {useEffect,useRef,useState} from 'react';
 import type {KeyboardEvent,PointerEvent} from 'react';
@@ -52,11 +53,11 @@ export function SelectionCatalog({selected,tab,onSelect,onTab,onOpen}:{selected:
  const slots=flat?n:n*Math.ceil(10/n),step=flat?1:360/slots;
  useEffect(()=>{if(found&&found.length&&!found.includes(selected))onSelect(found[0])},[q]);
  const surface=useRef<HTMLDivElement>(null),tabRefs=useRef<(HTMLButtonElement|null)[]>([]);
- const[vh,setVh]=useState(()=>typeof window==='undefined'?900:window.innerHeight),[width,setWidth]=useState(1000),[rot,setRot]=useState(-index*step),[dragging,setDragging]=useState(false);
+ const[vh,setVh]=useState(()=>typeof window==='undefined'?900:window.innerHeight/uiZoom()),[width,setWidth]=useState(1000),[rot,setRot]=useState(-index*step),[dragging,setDragging]=useState(false);
  const rotRef=useRef(rot);rotRef.current=rot;
  const justDragged=useRef(false),gesture=useRef<{id:number;x:number;y:number;start:number;moved:boolean;samples:{t:number;r:number}[]}|null>(null);
  useEffect(()=>{const el=surface.current;if(!el||typeof ResizeObserver==='undefined')return;const ro=new ResizeObserver(()=>setWidth(el.clientWidth||1000));ro.observe(el);setWidth(el.clientWidth||1000);return()=>ro.disconnect()},[]);
- useEffect(()=>{const on=()=>setVh(window.innerHeight);window.addEventListener('resize',on);return()=>window.removeEventListener('resize',on)},[]);
+ useEffect(()=>{const on=()=>setVh(window.innerHeight/uiZoom());window.addEventListener('resize',on);return()=>window.removeEventListener('resize',on)},[]);
  /* 카드 크기는 화면 높이에 맞춰요: 제목·탭·설명·버튼이 차지하는 높이(약 450px)를 빼고 남는 만큼, 200~330px */
  const cardH=Math.round(Math.max(200,Math.min(330,vh-468,width*.22*1.25))),cardW=Math.round(cardH/1.25);
  const radius=slots<2?0:Math.round(cardW/2/Math.tan(Math.PI/slots)*1.12);

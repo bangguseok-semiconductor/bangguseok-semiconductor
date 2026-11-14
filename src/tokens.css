@@ -62,3 +62,8 @@
  --sh-float:0 0 0 1px #ffffff14,0 16px 40px -8px #000000b3;
  color-scheme:dark;
 }
+
+/* 화면 밀도: 브라우저 90% 크기(⌘ -) 정도를 기본으로. vh/vw는 --z로 나눠 화면을 꽉 채워요 */
+@media (min-width:901px){:root{zoom:.9;--z:.9}}
+/* 텍스트 필드 상태 — 첫 화면 입력칸과 같은 규칙: 기본은 옅은 선, 올리면 조금 진하게, 입력 중엔 선만 또렷하게(링 없음) */
+:root{--tf-bg:var(--c-surface);--tf-line:var(--c-line);--tf-line-hover:var(--gray-300);--tf-line-focus:var(--gray-500);--tf-ph:var(--c-muted)}

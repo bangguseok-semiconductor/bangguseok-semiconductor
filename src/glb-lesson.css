@@ -77,7 +77,7 @@
 
 /* 가운데 위쪽 재생 막대 — 작게 떠 있어 3D를 가리지 않아요 */
 .glb-player{position:absolute;z-index:3;top:var(--sp-4);left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:var(--sp-1);height:48px;max-width:calc(100% - var(--sp-8));padding:0 var(--sp-2);box-sizing:border-box;border-radius:var(--r-lg);background:var(--c-surface);box-shadow:var(--sh-float)}
-.shell-page .shell-center>.glb-player{position:absolute!important;z-index:3!important;left:calc(var(--shell-l) + (100vw - var(--shell-l) - var(--shell-r)) / 2)}
+.shell-page .shell-center>.glb-player{position:absolute!important;z-index:3!important;left:calc(var(--shell-l) + (calc(100vw / var(--z,1)) - var(--shell-l) - var(--shell-r)) / 2)}
 @media(max-width:900px){.shell-page .shell-center>.glb-player{left:50%}}
 .glb-player-title{display:flex;align-items:baseline;gap:var(--sp-2);min-width:0;padding:0 var(--sp-2);font-size:var(--fs-ui);color:var(--c-ink);white-space:nowrap}
 .glb-player-title b{color:var(--c-accent-strong);font-variant-numeric:tabular-nums}
@@ -93,8 +93,8 @@
 @media(max-width:900px){.glb-player{top:var(--sp-3)}}
 
 /* 부품 설명: 3D 위에 떠서, 누른 자리 가까이(아래 가운데)에서 바로 읽어요 */
-.shell-page .shell-center>.glb-part-pop,.shell-page .shell-center>.glb-part-tip{position:absolute!important;z-index:3!important;left:calc(var(--shell-l) + (100vw - var(--shell-l) - var(--shell-r)) / 2);transform:translateX(-50%)}
-.glb-part-pop{bottom:96px;width:min(360px,calc(100vw - var(--shell-l) - var(--shell-r) - 48px));box-sizing:border-box;padding:var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);border-radius:var(--r-lg);background:var(--c-surface);box-shadow:var(--sh-float);animation:glb-pop .18s var(--ease)}
+.shell-page .shell-center>.glb-part-pop,.shell-page .shell-center>.glb-part-tip{position:absolute!important;z-index:3!important;left:calc(var(--shell-l) + (calc(100vw / var(--z,1)) - var(--shell-l) - var(--shell-r)) / 2);transform:translateX(-50%)}
+.glb-part-pop{bottom:96px;width:min(360px,calc(calc(100vw / var(--z,1)) - var(--shell-l) - var(--shell-r) - 48px));box-sizing:border-box;padding:var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);border-radius:var(--r-lg);background:var(--c-surface);box-shadow:var(--sh-float);animation:glb-pop .18s var(--ease)}
 .glb-part-pop>div{display:flex;align-items:center;gap:var(--sp-2);margin:-4px 0 var(--sp-1)}
 .glb-part-pop b{flex:1;font-size:var(--fs-body);font-weight:var(--fw-bold);color:var(--c-ink)}
 .glb-part-pop b::before{content:'';display:inline-block;width:8px;height:8px;margin-right:var(--sp-2);border-radius:50%;background:var(--c-accent);vertical-align:1px}
@@ -174,21 +174,69 @@
 .lesson-pager>button:focus-visible{outline:2px solid var(--c-accent);outline-offset:2px}
 
 /* 다른 학습으로 이동: 드롭다운 */
-.lesson-nav{position:relative;display:block;margin:0 0 var(--sp-3)}
-.lesson-nav-btn{display:flex;align-items:center;gap:var(--sp-2);width:100%;height:40px;padding:0 var(--sp-3);box-sizing:border-box;border:1px solid var(--c-line);border-radius:var(--r-md);background:var(--c-surface);color:var(--c-ink);font:inherit;font-size:var(--fs-ui);text-align:left;cursor:pointer;transition:background-color .15s var(--ease),border-color .15s var(--ease)}
-.lesson-nav-btn .lesson-nav-label{flex:none;color:var(--c-muted);font-size:var(--fs-caption);font-weight:var(--fw-semibold)}
-.lesson-nav-btn b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:var(--fw-semibold)}
-.lesson-nav-chev{flex:none;width:14px!important;height:14px!important;color:var(--c-muted);transition:transform .15s var(--ease)}
-.lesson-nav-btn[aria-expanded=true] .lesson-nav-chev{transform:rotate(180deg)}
-.lesson-nav-btn:hover,.lesson-nav-btn[aria-expanded=true]{background:var(--c-hover);border-color:var(--c-ink-2)}
-.lesson-nav-btn:focus-visible{outline:2px solid var(--c-accent);outline-offset:2px}
-.lesson-nav-menu{position:absolute;z-index:6;top:44px;left:0;right:0;display:flex;flex-direction:column;gap:2px;margin:0;padding:6px;list-style:none;border-radius:var(--r-md);background:var(--gray-800);box-shadow:var(--sh-float)}
-.lesson-nav-menu button{display:flex;align-items:center;gap:var(--sp-2);width:100%;height:36px;padding:0 var(--sp-3);border:0;border-radius:var(--r-sm);background:transparent;color:var(--gray-0);font:inherit;font-size:var(--fs-ui);text-align:left;cursor:pointer}
-.lesson-nav-menu button span{flex:1}
-.lesson-nav-menu button svg.bi{width:14px!important;height:14px!important}
-.lesson-nav-menu button:hover:not(:disabled){background:var(--gray-700)}
-.lesson-nav-menu [aria-selected=true] button{background:var(--c-accent)}
+
+/* 대표 관련 기업: 3열 카드 */
+.company-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-2);margin:var(--sp-2) 0 var(--sp-3)!important;padding:0!important;list-style:none}
+.company-card{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0;padding:var(--sp-3) var(--sp-2) var(--sp-2);border:1px solid var(--c-line);border-radius:var(--r-md);background:var(--c-surface)}
+.company-logo{display:grid;place-items:center;width:36px;height:36px;margin-bottom:4px;border-radius:var(--r-sm);background:var(--c-surface-2);overflow:hidden}
+.company-logo img{width:100%;height:100%;object-fit:contain;padding:4px;box-sizing:border-box}
+.company-mark{font-size:12px;font-weight:var(--fw-bold);letter-spacing:-.02em;color:var(--c-ink-2)}
+.company-mark[data-len="4"]{font-size:9.5px}.company-mark[data-len="3"]{font-size:10.5px}
+.company-card b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:var(--fs-caption);line-height:1.35;font-weight:var(--fw-semibold);color:var(--c-ink);word-break:keep-all}
+.company-card small{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:11px;line-height:1.35;color:var(--c-ink-2);word-break:keep-all}
+.company-country{margin-top:auto;padding-top:2px;font-size:11px;color:var(--c-muted)}
+.shell-left[style*="--shell-w"] .company-grid{grid-template-columns:repeat(auto-fill,minmax(84px,1fr))}
+
+/* 제목 옆 ⌄ : 같은 분야 학습 고르기 (글자에 맞춘 메뉴) */
+.shell-page .workbench-panel-title{position:relative}
+.lesson-nav{flex:none;position:static}
+.lesson-nav-trigger{display:grid;place-items:center;width:24px;height:24px;padding:0;border:0;border-radius:var(--r-sm);background:transparent;color:var(--c-ink-2);cursor:pointer}
+.lesson-nav-trigger svg.bi{width:12px!important;height:12px!important;transition:transform .15s var(--ease)}
+.lesson-nav-trigger:hover,.lesson-nav-trigger[aria-expanded=true]{background:var(--c-hover);color:var(--c-ink)}
+.lesson-nav-trigger[aria-expanded=true] svg.bi{transform:rotate(180deg)}
+.lesson-nav-trigger:focus-visible{outline:2px solid var(--c-accent);outline-offset:1px}
+.lesson-nav-menu{position:absolute;z-index:30;top:calc(100% - 4px);left:var(--sp-3);display:flex;flex-direction:column;gap:1px;width:max-content;min-width:0;margin:0;padding:6px;list-style:none;border-radius:var(--r-md);background:var(--gray-800);box-shadow:var(--sh-float)}
+.lesson-nav-head{padding:4px var(--sp-2) 6px 30px;font-size:11px;font-weight:var(--fw-semibold);color:var(--gray-400)}
+.lesson-nav-menu button{display:flex;align-items:center;gap:var(--sp-2);width:100%;height:32px;padding:0 var(--sp-3) 0 var(--sp-2);border:0;border-radius:var(--r-sm);background:transparent;color:var(--gray-0);font:inherit;font-size:var(--fs-ui);text-align:left;white-space:nowrap;cursor:pointer}
+.lesson-nav-check{width:14px!important;height:14px!important;opacity:0}
+[aria-selected=true]>button .lesson-nav-check{opacity:1}
+.lesson-nav-menu button:hover:not(:disabled){background:var(--c-accent)}
 .lesson-nav-menu button:disabled{color:var(--gray-500);cursor:default}
-.lesson-nav-menu small{font-size:var(--fs-caption);color:var(--gray-500)}
+.lesson-nav-menu small{margin-left:var(--sp-2);font-size:11px;color:var(--gray-500)}
 .lesson-nav-menu button:focus-visible{outline:2px solid var(--c-accent);outline-offset:-2px}
-.shell-page .glb-guide.shell-left:has(.lesson-nav-menu),.shell-page .photo-instruction.shell-left:has(.lesson-nav-menu){overflow:visible!important}
+.shell-page .shell-left:has(.lesson-nav-menu){overflow:visible!important}
+/* 드롭다운 메뉴는 글자 길이에 맞춰요 */
+.glb-partpick-menu{right:auto!important;width:max-content;min-width:160px;max-width:calc(100% - var(--sp-8))}
+.glb-partpick-menu button{white-space:nowrap;height:32px!important}
+/* 찾기: 탭 줄이 '검색칸 · 찾을 곳 · 닫기'로 바뀌어요 (피그마 Find처럼) */
+.glb-findbar{display:flex;flex-direction:column;gap:var(--sp-2);margin:0 calc(var(--sp-4) * -1) var(--sp-4);padding:0 var(--sp-3) var(--sp-3) var(--sp-4);border-bottom:1px solid var(--c-line)}
+.glb-findrow{display:flex;align-items:center;gap:var(--sp-1)}
+.glb-find{display:flex;align-items:center;gap:var(--sp-2);flex:1;min-width:0;height:32px;padding:0 var(--sp-2);box-sizing:border-box;color:var(--c-muted);cursor:text}
+.glb-find svg.bi{flex:none;width:14px!important;height:14px!important}
+.glb-find input{flex:1;min-width:0;height:100%;margin:0;padding:0;border:0;outline:0;background:transparent;color:var(--c-ink);font:inherit;font-size:var(--fs-ui)}
+.glb-find input::-webkit-search-cancel-button{display:none}
+.glb-findfilter{position:relative}
+.glb-findfilter .glb-icon[aria-pressed=true],.glb-findfilter .glb-icon[aria-expanded=true]{background:var(--c-selected);color:var(--c-ink)}
+.glb-scope-menu{left:auto!important;right:0;top:calc(100% + 4px)!important}
+.glb-findchips{display:flex;flex-wrap:wrap;gap:var(--sp-1)}
+.glb-chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 var(--sp-2) 0 var(--sp-3);border:1px solid var(--c-line);border-radius:var(--r-sm);background:var(--c-surface);color:var(--c-ink);font:inherit;font-size:var(--fs-caption);cursor:pointer}
+.glb-chip svg.bi{width:10px!important;height:10px!important;color:var(--c-muted)}
+.glb-chip:hover{border-color:var(--tf-line-hover)}
+.glb-results{display:flex;flex-direction:column;gap:var(--sp-4)}
+.glb-results h3{display:flex;align-items:center;gap:var(--sp-2);margin:0 0 var(--sp-1)!important;font-size:var(--fs-caption)!important;font-weight:var(--fw-semibold)!important;color:var(--c-muted)!important}
+.glb-results h3 small{font-weight:var(--fw-medium)}
+.glb-results ul{display:flex;flex-direction:column;gap:2px;margin:0;padding:0;list-style:none}
+.glb-results button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:var(--sp-2);border:0;border-radius:var(--r-sm);background:transparent;color:var(--c-ink);font:inherit;text-align:left;cursor:pointer}
+.glb-results button:hover{background:var(--c-hover)}
+.glb-results button b{font-size:var(--fs-ui);font-weight:var(--fw-semibold)}
+.glb-results button b em{margin-left:var(--sp-2);font-style:normal;font-size:11px;font-weight:var(--fw-medium);color:var(--c-muted)}
+.glb-results button span{font-size:var(--fs-caption);line-height:1.5;color:var(--c-ink-2)}
+.glb-results mark{padding:0 1px;border-radius:2px;background:var(--c-accent-soft);color:var(--c-accent-strong)}
+
+/* ⌘Z 되돌리기 알림 */
+.shell-page .shell-center>.glb-toast{position:absolute!important;z-index:4!important;left:calc(var(--shell-l) + (calc(100vw / var(--z,1)) - var(--shell-l) - var(--shell-r)) / 2);bottom:96px;transform:translateX(-50%);margin:0!important;padding:8px 14px;border-radius:var(--r-pill);background:var(--gray-800);color:var(--gray-0)!important;font-size:var(--fs-caption)!important;white-space:nowrap;pointer-events:none;animation:glb-toast 1.6s var(--ease) forwards}
+@keyframes glb-toast{0%{opacity:0;transform:translate(-50%,6px)}12%,80%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.shell-page .shell-center>.glb-toast{animation:none}}
+/* 제목 바로 오른쪽에 ⌄ (패널 접기 버튼은 맨 오른쪽 그대로) */
+.shell-page .workbench-panel-title:has(.lesson-nav)>h1{flex:0 1 auto!important}
+.shell-page .workbench-panel-title>.lesson-nav{order:2;margin-right:auto}
