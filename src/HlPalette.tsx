@@ -93,7 +93,7 @@ function ColorPicker({title,initial,canRemove,onAdd,onRemove,onClose}:{title:str
   <div className="hl-actions">
    {canRemove&&<button type="button" className="btn btn--tertiary btn--sm" onClick={onRemove}>지금 색 지우기</button>}
    <span className="hl-gap"/>
-   <button type="button" className="btn btn--primary btn--sm" onClick={()=>onAdd(hex)}><Icon name="plus-lg" className="lead"/>팔레트에 저장</button>
+   <button type="button" className="btn btn--tertiary btn--sm hl-save" onClick={()=>onAdd(hex)}>팔레트에 저장</button>
   </div>
  </div>;
 }

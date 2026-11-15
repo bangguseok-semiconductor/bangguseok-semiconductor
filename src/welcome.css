@@ -250,3 +250,7 @@
  :root .entry-tour .tour-dock{top:auto!important;bottom:calc(min(54dvh,560px) + 28px)!important}
  :root .entry-tour:has(.tour-panel[hidden]) .tour-dock{bottom:24px!important}
 }
+/* 카드를 조금 더 위로 — 화면 가운데보다 살짝 아래 (휴대폰은 그대로 아래쪽) */
+@media(min-width:761px){
+ :root .entry-page .welcome-card,:root .entry-page .entry-choice-card{bottom:max(48px,calc(16vh / var(--z,1)))}
+}
