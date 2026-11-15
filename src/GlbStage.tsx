@@ -18,7 +18,7 @@ export type PlayState='loading'|'playing'|'paused'|'done'|'static'|'error';
 export type CircuitState={closed:boolean;high:boolean;a:boolean;b:boolean};
 export type CircuitKey=keyof CircuitState;
 type Props={src:string;label:string;play:'once'|'loop'|'none';paused:boolean;replay:number;reset:number;parts:GlbPart[];
- interact?:Interaction;circuit?:CircuitState;demo?:number;clear?:number;focus?:{part:GlbPart;n:number}|null;onParts?:(p:GlbPart[])=>void;onShot?:(part:GlbPart,url:string)=>void;onToggle?:(k:CircuitKey)=>void;onState?:(s:PlayState)=>void;progress?:{current:HTMLElement|null};onPick?:(p:GlbPart|null)=>void};
+ interact?:Interaction;circuit?:CircuitState;demo?:number;clear?:number;focus?:{part:GlbPart;n:number}|null;onParts?:(p:GlbPart[])=>void;onShot?:(part:GlbPart,url:string)=>void;onToggle?:(k:CircuitKey)=>void;onState?:(s:PlayState)=>void;progress?:{current:HTMLElement|null};seek?:{current:((p:number)=>void)|null};onPick?:(p:GlbPart|null)=>void};
 
 const Q_ON=new THREE.Quaternion(0,0,0,1),Q_OFF=new THREE.Quaternion(0,0,0.3193088,0.9476507);
 const LEVERS:Record<string,CircuitKey>={'switch a lever':'closed','signal switch lever':'high','input a lever':'a','input b lever':'b'};
@@ -170,6 +170,10 @@ export function GlbStage(p:Props){
    demo:()=>{if(!L.mixer||!L.actions.length)return;L.demo=true;for(const a of L.actions){a.reset();a.setLoop(THREE.LoopOnce,1);a.clampWhenFinished=true;a.play()}L.mixer.timeScale=1;state('playing')},
    apply,
    pause:on=>{if(!L.mixer)return;L.mixer.timeScale=on?0:1;if(L.actions.some(a=>a.isRunning()))state(on?'paused':'playing')}};
+  /* 재생 막대에서 끌어 원하는 시점으로 (0~1). 일시정지 상태면 그 장면에 멈춰 있어요 */
+  const seek=(p:number)=>{if(!L.mixer||!L.actions.length)return;const dur=Math.max(...L.actions.map(a=>a.getClip().duration));if(!(dur>0))return;const t=Math.min(dur-1e-4,Math.max(0,p*dur));
+   for(const a of L.actions){a.enabled=true;if(!a.isScheduled())a.play();a.paused=false;a.time=Math.min(t,a.getClip().duration-1e-4)}L.mixer.update(0);if(L.mixer.timeScale===0)state('paused')};
+  if(props.current.seek)props.current.seek.current=seek;
   let lastP=-2;const tick=()=>{frame=requestAnimationFrame(tick);{const pe=props.current.progress?.current;if(pe){let p=-1;if(L.mixer&&L.actions.length){const dur=Math.max(...L.actions.map(a=>a.getClip().duration));if(dur>0){const t=Math.max(...L.actions.map(a=>a.time));p=L.actions.some(a=>a.loop===THREE.LoopRepeat&&a.isRunning())?(t%dur)/dur:Math.min(1,t/dur)}}p=Math.round(p*400)/400;if(p!==lastP){lastP=p;pe.style.setProperty('--p',String(Math.max(0,p)))}}}if(++visTick%8===0){const v=measure();if(Math.abs(v.l-vis.l)>1||Math.abs(v.r-vis.r)>1||Math.abs(v.b-vis.b)>1){vis=v;applyView()}}const now=performance.now(),dt=Math.min((now-lastT)/1000,.1);lastT=now;L.mixer?.update(dt);rig.update();controls.update();renderer.render(scene,camera);
    const g=(part:GlbPart|null)=>part?{target:L.groups.get(part)??[],name:part.name}:null;
    frames.update(camera,L.hover&&L.hover!==L.sel?g(L.hover):null,g(L.sel))};

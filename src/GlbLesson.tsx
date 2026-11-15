@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
-import type {ReactNode} from 'react';
+import type {ReactNode,PointerEvent as RPointerEvent,KeyboardEvent as RKeyboardEvent} from 'react';
 import './glb-lesson.css';
 import {StudyHub} from './StudyHub';
 import {readLessonNote,writeLessonNote} from './lessonNoteStore';
@@ -74,14 +74,20 @@ export function GlbLesson({id,onExit,onMission,onSwitch,profile,right,extra}:{id
  const total=def.tracks.reduce((n,t)=>n+t.stages.length,0),progress=Math.round(seen.size/total*100);
  const row=(circuit.a?2:0)+(circuit.b?1:0);
 
- const progressRef=useRef<HTMLSpanElement|null>(null);
+ const progressRef=useRef<HTMLSpanElement|null>(null),seekRef=useRef<((p:number)=>void)|null>(null),scrub=useRef<{was:boolean}|null>(null),[scrubbing,setScrubbing]=useState(false);
+ /* 재생 막대 끌기: 끄는 동안은 멈추고, 놓으면 원래 재생 중이었을 때만 이어서 재생 */
+ const scrubAt=(x:number)=>{const el=progressRef.current;if(!el)return;const r=el.getBoundingClientRect();seekRef.current?.(Math.min(1,Math.max(0,(x-r.left)/r.width)))};
+ const scrubDown=(e:RPointerEvent<HTMLSpanElement>)=>{if(e.button!==0||play==='loading')return;e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);scrub.current={was:!paused&&play==='playing'};setScrubbing(true);setPaused(true);scrubAt(e.clientX)};
+ const scrubMove=(e:RPointerEvent<HTMLSpanElement>)=>{if(scrub.current)scrubAt(e.clientX)};
+ const scrubUp=()=>{const s=scrub.current;scrub.current=null;setScrubbing(false);if(s?.was)setPaused(false)};
+ const scrubKey=(e:RKeyboardEvent<HTMLSpanElement>)=>{const d=e.key==='ArrowRight'?.05:e.key==='ArrowLeft'?-.05:e.key==='Home'?-1:e.key==='End'?1:0;if(!d)return;e.preventDefault();const cur=parseFloat(progressRef.current?.style.getPropertyValue('--p')||'0')||0;seekRef.current?.(Math.min(1,Math.max(0,cur+d)))};
  return <main className="glb-page lesson-workbench shell-page" {...shell.attrs}>
   <ShellChips leftId={id} left={def.title} right="메모 · AI"/>
   <button type="button" className="phone-back" aria-label="실습 선택으로 나가기" onClick={onExit}><Icon name="chevron-left" size={20}/></button>
   <div className="glb-grid shell-grid">
    <section className="glb-visual shell-center" aria-label="3D 학습 공간">
     <GlbStage src={src} label={`${def.title} · ${stage.title} 3D 모형`} play={stage.play} paused={paused} replay={replay} reset={reset} parts={def.parts}
-     interact={stage.interact} circuit={circuit} demo={demo} clear={clear} focus={focus} onParts={setPresent} onShot={(pt,url)=>setShot({part:pt,url})} onToggle={toggle} onState={setPlay} onPick={setPart} progress={progressRef}/>
+     interact={stage.interact} circuit={circuit} demo={demo} clear={clear} focus={focus} onParts={setPresent} onShot={(pt,url)=>setShot({part:pt,url})} onToggle={toggle} onState={setPlay} onPick={setPart} progress={progressRef} seek={seekRef}/>
     <div className="glb-player" role="group" aria-label="단계 재생">
      <button type="button" className="glb-icon" aria-label="이전 단계" data-tip="이전 단계" data-tip-pos="bottom" disabled={step===0} onClick={()=>go(step-1)}><Icon name="chevron-left"/></button>
      <span className="glb-player-title"><b>{String(step+1).padStart(2,'0')}</b><span>{stage.title}</span></span>
@@ -90,7 +96,7 @@ export function GlbLesson({id,onExit,onMission,onSwitch,profile,right,extra}:{id
       {play==='done'
        ?<button type="button" className="glb-icon" aria-label="다시 보기" data-tip="다시 보기" data-tip-pos="bottom" onClick={()=>{setPaused(false);setReplay(r=>r+1)}}><Icon name="arrow-repeat"/></button>
        :<button type="button" className="glb-icon" aria-label={paused?'재생':'일시정지'} data-tip={paused?'재생':'일시정지'} data-tip-pos="bottom" disabled={play==='loading'} onClick={()=>setPaused(v=>!v)}><Icon name={paused?'play-fill':'pause-fill'}/></button>}</>}
-     {animated&&<span ref={progressRef} className="glb-progress" data-state={play} role="progressbar" aria-label="재생 진행" aria-valuemin={0} aria-valuemax={100}><i/></span>}
+     {animated&&<span ref={progressRef} className="glb-progress" data-state={play} data-scrub={scrubbing||undefined} role="slider" tabIndex={0} aria-label="재생 위치" aria-valuemin={0} aria-valuemax={100} aria-valuetext="좌우 방향키로 이동" onPointerDown={scrubDown} onPointerMove={scrubMove} onPointerUp={scrubUp} onPointerCancel={scrubUp} onKeyDown={scrubKey}><i className="glb-progress-track"><i className="glb-progress-fill"/></i><b className="glb-progress-thumb" aria-hidden="true"/></span>}
      {stage.interact&&<><i className="glb-sep" aria-hidden="true"/><button type="button" className="glb-icon" aria-label="예시 재생" data-tip="예시 애니메이션 보기" data-tip-pos="bottom" disabled={play==='loading'||play==='playing'} onClick={()=>setDemo(d=>d+1)}><Icon name="play-fill"/></button></>}
     </div>
     {part&&tab==='steps'?<div className="glb-part-pop" role="status" aria-live="polite"><div><b>{part.name}</b><button type="button" className="glb-icon" aria-label="설명 닫기" onClick={()=>setClear(c=>c+1)}><Icon name="x-lg"/></button></div><p>{part.desc}</p></div>

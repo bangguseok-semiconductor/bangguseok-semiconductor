@@ -282,3 +282,15 @@
  .glb-stage>.model-stage-status{top:68px}
 }
 .glb-player>.glb-progress{top:auto!important;bottom:4px!important;height:3px!important;padding:0!important;margin:0!important}
+/* 재생 막대 = 슬라이더: 올리면 동그란 손잡이가 나오고 끌어서 시점 이동 */
+.glb-player>.glb-progress{bottom:0!important;left:var(--sp-3)!important;right:var(--sp-3)!important;height:12px!important;background:transparent!important;overflow:visible!important;pointer-events:auto!important;cursor:pointer;touch-action:none;border-radius:0!important}
+.glb-progress .glb-progress-track{position:absolute;top:auto;left:0;right:0;bottom:4px;height:3px;border-radius:2px;background:var(--c-line)!important;transform:none!important;overflow:hidden;transition:height .12s var(--ease),bottom .12s var(--ease)}
+.glb-progress .glb-progress-fill{position:absolute;inset:0;border-radius:inherit;background:var(--c-accent);transform-origin:left center;transform:scaleX(var(--p,0))}
+.glb-progress .glb-progress-thumb{position:absolute;bottom:5.5px;left:calc(var(--p,0) * 100%);width:12px;height:12px;margin-left:-6px;margin-bottom:-6px;border-radius:50%;background:var(--c-accent);box-shadow:0 0 0 2px var(--c-surface),0 1px 4px #0b0d1033;transform:scale(0);transition:transform .12s var(--ease);pointer-events:none}
+.glb-progress:hover .glb-progress-track,.glb-progress[data-scrub] .glb-progress-track,.glb-progress:focus-visible .glb-progress-track{height:4px;bottom:3.5px}
+.glb-progress:hover .glb-progress-thumb,.glb-progress[data-scrub] .glb-progress-thumb,.glb-progress:focus-visible .glb-progress-thumb{transform:scale(1)}
+.glb-progress[data-scrub] .glb-progress-thumb{transform:scale(1.15)}
+.glb-progress:focus-visible{outline:none}
+.glb-progress:focus-visible .glb-progress-thumb{box-shadow:0 0 0 2px var(--c-surface),0 0 0 4px var(--c-accent)}
+.glb-progress[data-state=paused] .glb-progress-fill,.glb-progress[data-state=paused] .glb-progress-thumb{background:var(--c-ink-2)}
+.glb-progress[data-scrub] .glb-progress-fill,.glb-progress[data-scrub] .glb-progress-thumb{background:var(--c-accent)!important}
