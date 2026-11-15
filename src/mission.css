@@ -201,3 +201,5 @@
 .game-tile[data-level][aria-checked=true]{border-color:var(--lv);background:var(--lv);box-shadow:0 var(--ledge) 0 var(--lv-ledge)}
 .game-tile[data-level][aria-checked=true]:active{box-shadow:0 0 0 var(--lv-ledge)}
 .game-tile[data-level][aria-checked=true]>span:last-child{color:#ffffffe6}
+/* 축하 색종이: 화면 전체 맨 위, 클릭은 통과 */
+.confetti{position:fixed;inset:0;z-index:400;width:100vw;height:100vh;pointer-events:none}

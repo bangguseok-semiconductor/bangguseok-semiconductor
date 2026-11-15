@@ -84,7 +84,7 @@ function App({visitor,onWelcome,onLogout,active,pendingNav,onNavDone}:{visitor:V
  const startMission=(lesson:MissionLesson)=>requestTransition(()=>{setMissionLesson(lesson);navigate('mission')});
  const go=(t:MenuTarget)=>{if(t==='tour')requestTransition(()=>{navigate('home');onWelcome('tour')});else if(t==='learn')open('home');else if(t==='quiz')startMission(page==='mission'?missionLesson:LESSONS.includes(page)?(page==='gown'?'gowning':page) as MissionLesson:(picked==='gown'?'gowning':picked) as MissionLesson);else if(t==='workspace')open('workspace');else requestTransition(()=>{navigate('home');onLogout()})};
  useEffect(()=>{if(active&&pendingNav){go(pendingNav);onNavDone?.()}},[active,pendingNav]);
- const navigation=<AppMenu current={page==='home'?'learn':page==='workspace'?'workspace':page==='mission'?'quiz':null} onSelect={go}/>;
+ const navigation=<AppMenu current={page==='home'?'learn':page==='workspace'?'workspace':page==='mission'?'quiz':null} onSelect={go} profile={profile}/>;
  const notice=<div className="notice"><span>ⓘ</span> 검수 전 기능 시연용 · 현장 절차 아님 <small>실제 작업은 시설의 승인된 SOP와 교육을 따르세요.</small></div>;
  const related=<section className="related"><span className="related-label">실제 장비</span><h3>Camfil · CamFFU 제품군</h3><p>팬·필터·제어부를 결합한 클린룸용 장비 제품군입니다. 공식 안내에서 EC 팬과 개별 운전용 제어기를 확인할 수 있어요.</p><a href={ffuReference.url} target="_blank" rel="noreferrer">공식 제품군 안내 보기<Icon name="box-arrow-up-right" className="trail"/></a></section>;
  if(!active)return null;

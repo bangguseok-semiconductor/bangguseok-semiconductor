@@ -23,10 +23,13 @@ export function StudyHub({lesson,ai=true,primary,tab:ctrlTab,onTab}:{lesson:stri
  const setTab=(t:HubTab)=>{setHubTab(t);onTab?.(t)};
  const kind:HubKind=tab==='ai'?'ai':'memo';
  const[view,setView]=useState<'current'|'history'>('current'),[query,setQuery]=useState(''),[draft,setDraft]=useState('');
- const[pick,setPick]=useState<{text:string;x:number;y:number}|null>(null);
+ const[pick,setPick]=useState<{text:string;x:number;y:number}|null>(null),[finding,setFinding]=useState(false);
  const root=useRef<HTMLDivElement>(null),search=useRef<HTMLInputElement>(null),ask=useRef<HTMLTextAreaElement>(null),memo=useRef<HTMLElement|null>(null);
  const cur=currentId(book,lesson,kind),entry=book.entries.find(e=>e.id===cur);
  useEffect(()=>{setPick(null)},[tab,view,cur]);
+ useEffect(()=>{if(tab!=='notes'||view!=='current')setFinding(false)},[tab,view]);
+ /* 검색 아이콘: 메모장에선 '지금 메모 안에서 찾기', AI에선 지난 대화 검색 (지난 메모 목록 화면에는 따로 검색칸이 있어요) */
+ const inNote=tab==='notes'&&view==='current';
 
  const goHistory=(focusSearch=false)=>{setQuery('');setView(v=>v==='history'&&!focusSearch?'current':'history');if(focusSearch)requestAnimationFrame(()=>search.current?.focus())};
  const create=()=>{newEntry(lesson,kind);setView('current');requestAnimationFrame(()=>(kind==='ai'?ask.current:memo.current)?.focus())};
@@ -48,14 +51,14 @@ export function StudyHub({lesson,ai=true,primary,tab:ctrlTab,onTab}:{lesson:stri
    </div>:<span className="hub-title">메모장</span>}
    <div className="hub-actions">
     <button type="button" className="hub-icon" aria-pressed={view==='history'} aria-label={kind==='ai'?'이전 대화':'이전 메모'} data-tip={kind==='ai'?'이전 대화':'이전 메모'} data-tip-pos="bottom" onClick={()=>goHistory()}><Icon name="clock-history"/></button>
-    <button type="button" className="hub-icon" aria-label="검색" data-tip="검색" data-tip-pos="bottom" onClick={()=>goHistory(true)}><Icon name="search"/></button>
+    <button type="button" className="hub-icon" aria-pressed={inNote?finding:undefined} aria-label={inNote?'메모에서 찾기':'검색'} data-tip={inNote?'메모에서 찾기':'검색'} data-tip-pos="bottom" onClick={()=>inNote?setFinding(v=>!v):goHistory(true)}><Icon name="search"/></button>
     <button type="button" className="hub-icon" aria-label={kind==='ai'?'새 대화':'새 메모'} data-tip={kind==='ai'?'새 대화':'새 메모'} data-tip-pos="bottom" onClick={create}><Icon name="pencil-square"/></button>
    </div>
   </div>
   {view==='history'?<History lesson={lesson} kind={kind} query={query} setQuery={setQuery} searchRef={search} current={cur} primary={primary} onOpen={open} onBack={()=>setView('current')}/>:
    tab==='notes'?<div className="hub-body">
-    {entry?<NoteSheet label="새 메모" value={entry.text} updated={entry.updated} failed={notebookFailed()} onChange={t=>editEntry(entry.id,t)} inputRef={memoRef} onSelection={onSelection}/>
-     :<NoteSheet label={primary.label} value={primary.value} updated={primary.updated} failed={primary.failed} onChange={primary.onChange} inputRef={memoRef} onSelection={onSelection}/>}
+    {entry?<NoteSheet label="새 메모" value={entry.text} updated={entry.updated} failed={notebookFailed()} onChange={t=>editEntry(entry.id,t)} inputRef={memoRef} onSelection={onSelection} find={finding} onCloseFind={()=>setFinding(false)}/>
+     :<NoteSheet label={primary.label} value={primary.value} updated={primary.updated} failed={primary.failed} onChange={primary.onChange} inputRef={memoRef} onSelection={onSelection} find={finding} onCloseFind={()=>setFinding(false)}/>}
    </div>:
    <AiThread lesson={lesson} entry={entry} draft={draft} setDraft={setDraft} inputRef={ask}/>}
   {pick&&<button type="button" className="hub-ask" style={{left:pick.x,top:pick.y}} onMouseDown={e=>e.preventDefault()} onClick={askAI}><Icon name="stars" className="lead"/>AI에게 물어보기</button>}

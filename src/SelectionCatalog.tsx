@@ -59,7 +59,8 @@ export function SelectionCatalog({selected,tab,onSelect,onTab,onOpen}:{selected:
  useEffect(()=>{const el=surface.current;if(!el||typeof ResizeObserver==='undefined')return;const ro=new ResizeObserver(()=>setWidth(el.clientWidth||1000));ro.observe(el);setWidth(el.clientWidth||1000);return()=>ro.disconnect()},[]);
  useEffect(()=>{const on=()=>setVh(window.innerHeight/uiZoom());window.addEventListener('resize',on);return()=>window.removeEventListener('resize',on)},[]);
  /* 카드 크기는 화면 높이에 맞춰요: 제목·탭·설명·버튼이 차지하는 높이(약 450px)를 빼고 남는 만큼, 200~330px */
- const cardH=Math.round(Math.max(200,Math.min(340,vh-430,width*.26))),cardW=cardH;/* 정사각 카드 */
+ /* 카드 = 안쪽 정사각 그림(art) + 위아래 여백 + 아래 이름 줄 */
+ const art=Math.round(Math.max(180,Math.min(300,vh-500,width*.23))),CARD_PAD=10,TEXT_H=56,cardW=art+CARD_PAD*2,cardH=art+CARD_PAD*2+TEXT_H;
  const radius=slots<2?0:Math.round(cardW/2/Math.tan(Math.PI/slots)*1.12);
  const clampF=(v:number)=>Math.min(0,Math.max(-(n-1),v));
  const frontSlot=(r:number)=>flat?-clampF(Math.round(r)):((Math.round(-r/step)%slots)+slots)%slots;
@@ -100,12 +101,11 @@ export function SelectionCatalog({selected,tab,onSelect,onTab,onOpen}:{selected:
     const x=sg*(ad<=1?ad*cardW*.66:cardW*.66+(ad-1)*cardW*.3),ang=sg*-Math.min(1,ad)*42,sc=1-Math.min(ad,3)*.07,fade=ad<=2?1:Math.max(0,1-(ad-2)*1.6);
     return <div key={id} className="ring-slot deck-slot" data-front={k===front||undefined} aria-hidden={k!==front} style={{transform:`perspective(1500px) translateX(${x}px) translateZ(${-Math.min(ad,3)*60}px) rotateY(${ang}deg) scale(${sc})`,opacity:fade,filter:`brightness(${1-near*.22})`,visibility:fade<=0.01?'hidden':undefined,zIndex:Math.round(100-ad*10)} as React.CSSProperties}>
      <article className="ring-card cover-card" onClick={()=>{if(!justDragged.current&&k!==front)pick(id)}}>
-      <Preview id={id} live={isFront} gid={'catalog-wafer-'+k}/>
-      <span className="sr-only">{m.title}</span>
+      <div className="cover-art"><Preview id={id} live={isFront} gid={'catalog-wafer-'+k}/></div>
+      <div className="cover-text"><b>{m.title}</b><span>{'sub' in m?m.sub:area[id]}</span></div>
      </article></div>})}
   </div>
  </div>
- <div className="cover-caption" aria-hidden="true" key={current}><b>{info.title}</b><span>{'sub' in info?info.sub:area[current]}</span></div>
  <div className="catalog-paging" data-single={items.length<2||undefined}><div className="selector-switch catalog-dots" aria-label="학습 카드 선택">{items.map(id=><button key={id} className={current===id?'selected':''} aria-label={modules[id].label} aria-pressed={current===id} onClick={()=>pick(id)}/>)}</div></div><p className="catalog-hint">{items.length>1?'좌우로 넘기거나 옆 카드를 눌러 선택해요. 키보드 방향키로도 이동할 수 있어요.':'현재 설계 학습은 MOSFET 1개예요. 전체 탭에서 다른 학습도 함께 볼 수 있어요.'}</p>
  <div className="selector-actions catalog-actions"><button type="button" className="catalog-cta is-primary" onClick={()=>onOpen(current)}>공부하기</button>{(current==='ffu'||current==='gown')&&<button type="button" className="catalog-cta is-secondary" onClick={()=>onOpen(current,true)}>{current==='ffu'?'퀴즈 풀기':'클린룸 개념 보기'}</button>}</div></>}</section></div>
 }

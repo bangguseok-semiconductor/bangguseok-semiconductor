@@ -1,3 +1,4 @@
+import {Confetti} from './Confetti';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import {uiZoom} from './uiZoom';
 import type {ReactNode,DragEvent} from 'react';
@@ -88,6 +89,7 @@ export function MissionPage({lesson,profile,onExit,onLearn}:{lesson:MissionLesso
    </>}
   </div></div>}
 
+  {phase==='result'&&success&&<Confetti/>}
   {phase==='result'&&<div className="mission-scrim"><div className="mission-result" role="dialog" aria-modal="true" aria-labelledby="mission-result-title">
    <div className="mission-result-side">
     <h1 id="mission-result-title" ref={heading} tabIndex={-1}>{success?'미션 성공':'미션 실패'}</h1>

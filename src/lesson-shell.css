@@ -851,8 +851,8 @@ body.is-resizing .panel-resizer:not([data-dragging])::after{opacity:0!important}
    601~900px(태블릿): 데스크톱처럼 패널이 캔버스 위에 떠 있고, 너비만 화면에 맞게 줄여요.
    600px 이하(휴대폰): 펼친 패널이 아래에서 올라오는 시트가 돼요. 손잡이를 끌거나 눌러 접힘 · 반 · 전체 높이로. */
 @media(max-width:900px){
- .shell-page[data-shell-left=open]{--shell-l:calc(min(var(--panel-l),58vw) + var(--sp-3))}
- .shell-page[data-shell-right=open]{--shell-r:calc(min(var(--panel-r),58vw) + var(--sp-3))}
+ .shell-page[data-shell-left=open]{--shell-l:calc(min(var(--panel-l),42vw) + var(--sp-3))}
+ .shell-page[data-shell-right=open]{--shell-r:calc(min(var(--panel-r),42vw) + var(--sp-3))}
 }
 .sheet-handle{display:none}
 @media(max-width:600px){
@@ -899,7 +899,6 @@ body.is-resizing .panel-resizer:not([data-dragging])::after{opacity:0!important}
 .note-rich-editor b,.note-rich-editor strong{font-weight:var(--fw-bold)}
 .note-rich-editor u{text-decoration-thickness:1.5px;text-underline-offset:3px}
 .note-rich-editor mark{padding:0 2px;border-radius:3px;background:#ffe17a;color:#1f2328}
-:root:not([data-theme=light]) .note-rich-editor mark{background:#ffe17a}
 .note-rich-editor img{display:block;max-width:100%;height:auto;margin:var(--sp-2) 0;border-radius:var(--r-md);box-shadow:inset 0 0 0 1px var(--c-line),0 1px 3px #0b0d1014;user-select:none}
 .note-rich-editor img[data-kind=sketch]{background:#fff}
 .note-rich[data-drop] .note-rich-editor{border-radius:var(--r-md);box-shadow:inset 0 0 0 2px var(--c-accent);background:var(--c-accent-soft)}
@@ -980,3 +979,68 @@ body.is-shot-dragging .note-rich-editor{box-shadow:inset 0 0 0 1px var(--c-accen
 :root .draw-pad .draw-ink{width:28px!important;height:28px!important;min-width:28px!important;min-height:28px!important;padding:0!important;border:0!important;border-radius:50%!important;background:transparent!important;box-shadow:none}
 :root .draw-pad .draw-ink::after{content:''!important;display:block!important;width:18px;height:18px;border-radius:50%;background:var(--ink)!important;box-shadow:inset 0 0 0 1px #0000001a}
 :root .draw-pad .draw-ink[aria-checked=true]{box-shadow:0 0 0 2px var(--c-ink)}
+
+/* 휴대폰 학습 화면: 프로필은 ☰ 메뉴(로그아웃 위)로, '퀴즈 풀기'는 메모 도구 아이콘과 한 줄에 */
+.menu-profile{display:none}
+@media(max-width:600px){
+ body:has(.shell-page) .menu-profile{display:flex;align-items:center;padding:var(--sp-2) var(--sp-3) var(--sp-1)}
+ body:has(.shell-page) .menu-profile .profile-badge{gap:var(--sp-2)}
+ .shell-page .lesson-notes-head .profile-badge,.shell-page .shell-right .panel-heading>.profile-badge{display:none!important}
+ .shell-page .lesson-notes-head{position:absolute!important;z-index:2;top:64px;right:var(--sp-4);height:48px;display:flex!important;align-items:center;padding:0!important;margin:0!important;border:0!important;background:transparent!important;min-height:0!important}
+ .shell-page .lesson-notes-head .shell-actions{margin:0!important}
+ .shell-page .lesson-notes .hub-bar{justify-content:flex-start!important;min-height:48px;padding-right:120px!important}
+ .shell-page .lesson-notes .hub-actions{margin:0!important}
+ /* 탭 줄은 시트 맨 위를 덮는 불투명 띠 — 긴 내용이 스크롤돼도 탭 뒤로 비치지 않게 */
+ .sheet-tabs{left:0!important;right:0!important;bottom:calc(var(--sheet-h) - 64px)!important;height:64px!important;padding:18px var(--sp-4) 4px!important;border-radius:20px 20px 0 0!important;background:var(--c-surface)!important;box-shadow:inset 0 -1px 0 var(--c-line)}
+ .sheet-tabs-ink{top:18px!important;bottom:4px!important;left:var(--sp-4)!important;width:calc((100% - var(--sp-4) * 2 - var(--sp-1) * 2) / 3)!important}
+ .sheet-handle{z-index:34!important}
+}
+@media(max-width:600px){
+ .shell-page .lesson-notes-head{left:auto!important;width:max-content!important;min-width:max-content!important;max-width:none!important;flex:none!important}
+ :root .global-menu .menu-profile .grade-chip:not(#z){display:inline-flex!important;width:auto!important;height:24px!important;padding:0 var(--sp-2)!important;border-radius:var(--r-sm)!important;background:var(--g-bg)!important;color:var(--g-fg)!important;font-size:var(--fs-caption)!important}
+}
+/* 메모 안에서 찾기 */
+.note-find{display:flex;align-items:center;gap:2px;margin:calc(var(--sp-4) * -1) calc(var(--sp-4) * -1) var(--sp-1);padding:var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-3);border-bottom:1px solid var(--c-line);background:var(--c-surface)}
+.note-find-icon{width:16px!important;height:16px!important;margin-right:var(--sp-2)!important;color:var(--c-muted)}
+.note-find input{flex:1;min-width:0;height:32px;padding:0 var(--sp-2);border:0;border-radius:var(--r-sm);outline:none;background:transparent;color:var(--c-ink);font:inherit;font-size:var(--fs-ui)}
+.note-find input::-webkit-search-cancel-button{display:none}
+.note-find input:focus{box-shadow:inset 0 0 0 1px var(--tf-focus,var(--c-ink-2))}
+.note-find-count{min-width:36px;font-size:var(--fs-caption);color:var(--c-muted);text-align:right;font-variant-numeric:tabular-nums}
+::highlight(note-find){background-color:#ffe17a80;color:inherit}
+::highlight(note-find-cur){background-color:var(--orange-500);color:#fff}
+
+/* ── 메모 v2: 종이(스크롤) 안에 글 + 펜 그림층, 켜 두는 서식 도구, 형광펜 5색 ── */
+.note-rich .note-paper{position:relative;flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:var(--sp-2)}
+.note-rich .note-rich-editor{flex:1 0 auto;overflow:visible;min-height:200px}
+.note-ink{position:absolute;left:0;top:0;width:100%;overflow:visible;pointer-events:none;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.note-ink path{fill:none}
+.note-rich[data-pen] .note-ink{pointer-events:auto;cursor:crosshair;touch-action:none}
+.note-rich[data-pen] .note-ink[data-eraser]{cursor:cell}
+.note-rich[data-pen] .note-rich-editor{user-select:none;cursor:crosshair}
+.note-rich[data-mode] .note-rich-editor{cursor:text}
+.note-rich-editor mark{background:#ffe17a;color:#1f2328}
+.note-rich-editor mark[data-c=green]{background:#b9f0b0}
+.note-rich-editor mark[data-c=blue]{background:#b3dcff}
+.note-rich-editor mark[data-c=pink]{background:#ffc2de}
+.note-rich-editor mark[data-c=orange]{background:#ffcf9e}
+.note-swatches{display:flex;align-items:center;gap:2px;margin-left:2px}
+.note-swatch{display:grid;place-items:center;width:24px;height:24px;padding:0;border:0;border-radius:50%;background:transparent;cursor:pointer}
+.note-swatch::after{content:'';width:14px;height:14px;border-radius:50%;background:var(--sw);box-shadow:inset 0 0 0 1px #0000001f}
+.note-swatch[data-c=yellow]{--sw:#ffe17a}.note-swatch[data-c=green]{--sw:#b9f0b0}.note-swatch[data-c=blue]{--sw:#b3dcff}.note-swatch[data-c=pink]{--sw:#ffc2de}.note-swatch[data-c=orange]{--sw:#ffcf9e}
+.note-swatch[aria-checked=true]{box-shadow:inset 0 0 0 2px var(--c-ink)}
+.note-swatch:focus-visible{outline:2px solid var(--c-accent);outline-offset:1px}
+/* 형광펜 버튼 아래 작은 막대 = 지금 색 */
+.note-tool[data-hl]{position:relative}
+.note-tool[data-hl]::after{content:'';position:absolute;left:9px;right:9px;bottom:5px;height:3px;border-radius:2px;background:var(--hlc,#ffe17a)}
+.note-tool[data-hl=green]{--hlc:#9fe395}.note-tool[data-hl=blue]{--hlc:#8fcaff}.note-tool[data-hl=pink]{--hlc:#ffa8d0}.note-tool[data-hl=orange]{--hlc:#ffbb73}
+.note-tool[aria-pressed=true]{background:var(--c-accent-soft)!important;color:var(--c-accent-strong)!important}
+.note-tools{flex-wrap:wrap;row-gap:4px}
+:root .note-tools .note-swatch{width:24px!important;height:24px!important;min-width:24px!important;min-height:24px!important;max-height:24px;padding:0!important;border:0!important;border-radius:50%!important;background:transparent!important;flex:none}
+:root .note-tools .note-swatch::after{content:''!important;display:block!important;width:14px;height:14px;border-radius:50%;background:var(--sw)!important}
+:root .note-tools .note-swatch[aria-checked=true]{box-shadow:inset 0 0 0 2px var(--c-ink)!important}
+.study-hub:has(.note-rich[data-pen]) .hub-ask{display:none}
+:root .note-tools .note-swatch::after{display:none!important}
+.note-swatch i{display:block;width:14px;height:14px;border-radius:50%;background:var(--sw);box-shadow:inset 0 0 0 1px #0000001f;pointer-events:none}
+:root .note-tools .note-tool[data-hl]::after{display:none!important}
+.note-tool[data-hl]{position:relative}
+.note-hl-bar{position:absolute;left:9px;right:9px;bottom:5px;height:3px;border-radius:2px;background:var(--sw);pointer-events:none}

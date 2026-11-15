@@ -1,4 +1,4 @@
-import {useEffect,useRef,useState} from 'react';
+import {useEffect,useRef,useState,type ReactNode} from 'react';
 import {Icon,type IconName} from './Icon';
 import {toggleTheme,useDarkMode} from './theme';
 
@@ -11,7 +11,7 @@ const items:{id:Exclude<MenuTarget,'logout'>;label:string;icon:IconName}[]=[
  {id:'workspace',label:'워크스페이스',icon:'journal-text'},
  {id:'quiz',label:'퀴즈 풀러 가기',icon:'check2-circle'},
 ];
-export function AppMenu({current,onSelect}:{current?:MenuTarget|null;onSelect:(target:MenuTarget)=>void}){
+export function AppMenu({current,onSelect,profile}:{current?:MenuTarget|null;onSelect:(target:MenuTarget)=>void;profile?:ReactNode}){
  const[open,setOpen]=useState(false),root=useRef<HTMLDivElement>(null),dark=useDarkMode();
  useEffect(()=>{if(!open)return;const key=(e:KeyboardEvent)=>{if(e.key==='Escape'){setOpen(false);root.current?.querySelector<HTMLButtonElement>('.menu-button')?.focus()}};const down=(e:PointerEvent)=>{if(!root.current?.contains(e.target as Node))setOpen(false)};document.addEventListener('keydown',key);document.addEventListener('pointerdown',down);return()=>{document.removeEventListener('keydown',key);document.removeEventListener('pointerdown',down)}},[open]);
  const pick=(t:MenuTarget)=>{setOpen(false);onSelect(t)};
@@ -21,6 +21,7 @@ export function AppMenu({current,onSelect}:{current?:MenuTarget|null;onSelect:(t
    {items.map(item=><button key={item.id} role="menuitem" aria-current={current===item.id?'page':undefined} disabled={current===item.id} onClick={()=>pick(item.id)}><Icon name={item.icon} className="lead"/>{item.label}</button>)}
    <button role="menuitemcheckbox" aria-checked={dark} onClick={toggleTheme}><Icon name={dark?'sun':'moon-stars'} className="lead"/>{dark?'라이트 모드':'다크 모드'}</button>
    <hr/>
+   {profile&&<div className="menu-profile">{profile}</div>}
    <button role="menuitem" className="menu-logout" onClick={()=>pick('logout')}><Icon name="box-arrow-right" className="lead"/>로그아웃</button>
   </div>}
  </div>;

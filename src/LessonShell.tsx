@@ -15,21 +15,26 @@ type State={left:boolean;right:boolean;wl:number;wr:number;sheet:Sheet;dragH:num
 /* 반응형: 좁은 화면(1199px 이하)에선 패널을 한 번에 하나만 펼쳐 3D 캔버스를 넓게 남겨요.
    휴대폰(600px 이하)에선 펼친 패널이 아래에서 올라오는 시트가 되고, 손잡이로 높이를 바꿔요. */
 const mq=(q:string)=>typeof window!=='undefined'&&window.matchMedia?window.matchMedia(q):null;
-const narrowMq=mq('(max-width:1199px)'),phoneMq=mq('(max-width:600px)');
-const isNarrow=()=>!!narrowMq?.matches;
+const phoneMq=mq('(max-width:600px)');
+/* 휴대폰 시트에서만 한 번에 하나 — 데스크톱 · 태블릿은 양쪽을 따로 접고 펴요 */
+const isNarrow=()=>!!phoneMq?.matches;
 /* 패널 너비: 피그마처럼 안쪽 가장자리를 끌어 조절 (4px 단위, 240~480px). 이 브라우저에 기억해요. */
 export const PANEL_MIN=240,PANEL_MIN_R=304,PANEL_MAX=480,PANEL_DEFAULT={wl:300,wr:352};
 const readWidths=()=>{try{const v=JSON.parse(localStorage.getItem('semilab.panels')||'{}');const ok=(n:unknown,d:number,min:number)=>typeof n==='number'&&n>=min&&n<=PANEL_MAX?n:d;return {wl:ok(v.wl,PANEL_DEFAULT.wl,PANEL_MIN),wr:ok(v.wr,PANEL_DEFAULT.wr,PANEL_MIN_R)}}catch{return {...PANEL_DEFAULT}}};
-let state:State={left:false,right:isNarrow(),...readWidths(),sheet:'half',dragH:null};
+/* 처음엔 양쪽 다 펼침. 사용자가 접고 편 상태는 이 브라우저에 기억해서 다음에 그대로 */
+const readOpen=()=>{try{const v=JSON.parse(localStorage.getItem('semilab.panels')||'{}');return {left:v.left===true,right:v.right===true}}catch{return {left:false,right:false}}};
+const saveAll=()=>{if(phoneMq?.matches)return;try{localStorage.setItem('semilab.panels',JSON.stringify({wl:state.wl,wr:state.wr,left:state.left,right:state.right}))}catch{}};
+let state:State={...readOpen(),...readWidths(),sheet:'half',dragH:null};
 const listeners=new Set<()=>void>();
 const emit=()=>listeners.forEach(l=>l());
 const subscribe=(l:()=>void)=>{listeners.add(l);return()=>{listeners.delete(l)}};
-narrowMq?.addEventListener?.('change',e=>{if(e.matches&&!state.left&&!state.right){state={...state,right:true};emit()}});
 /* 휴대폰에선 아래 시트가 늘 하나는 떠 있어요(접힘 높이까지만 내려감) */
-const ensureSheet=()=>{if(phoneMq?.matches&&state.left&&state.right){state={...state,left:false,sheet:state.sheet};emit()}};
-phoneMq?.addEventListener?.('change',ensureSheet);if(phoneMq?.matches&&state.left&&state.right)state={...state,left:false};
+/* 휴대폰 시트는 패널 하나만: 둘 다 열렸거나 둘 다 닫혔으면 학습 가이드를 보여 줘요(저장은 안 함). 넓어지면 저장한 상태로 돌아가요 */
+const phoneFix=(s:State):State=>s.left===s.right?{...s,left:false,right:true}:s;
+const onPhoneChange=()=>{state=phoneMq?.matches?phoneFix(state):{...state,...readOpen()};emit()};
+phoneMq?.addEventListener?.('change',onPhoneChange);if(phoneMq?.matches)state=phoneFix(state);
 export const toggleShellPanel=(side:ShellSide)=>{const opening=state[side],other:ShellSide=side==='left'?'right':'left';
- state={...state,[side]:!opening,...(opening&&isNarrow()?{[other]:true}:{}),...(opening&&phoneMq?.matches&&state.sheet==='peek'?{sheet:'half' as Sheet}:{})};emit()};
+ state={...state,[side]:!opening,...(opening&&isNarrow()?{[other]:true}:{}),...(opening&&phoneMq?.matches&&state.sheet==='peek'?{sheet:'half' as Sheet}:{})};emit();saveAll()};
 const setSheet=(sheet:Sheet,dragH:number|null=null)=>{state={...state,sheet,dragH};emit()};
 /* 휴대폰 시트 탭: 학습 가이드(왼쪽 패널) · 메모 · AI(오른쪽 패널) */
 export type SheetTab='guide'|'notes'|'ai';
@@ -41,10 +46,10 @@ const setSheetDrag=(dragH:number|null)=>{state={...state,dragH};emit()};
 const focusLater=(selector:string)=>requestAnimationFrame(()=>document.querySelector<HTMLElement>(selector)?.focus());
 let bound=0;
 const onKey=(e:KeyboardEvent)=>{if(e.key!=='\\'||!(e.metaKey||e.ctrlKey))return;const t=e.target as HTMLElement|null;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable))return;e.preventDefault();toggleBoth()};
-export const setShellPanels=(closed:boolean)=>{state={...state,left:closed,right:closed||isNarrow()};emit()};
+export const setShellPanels=(closed:boolean)=>{state={...state,left:closed,right:closed||isNarrow()};emit();saveAll()};
 const clampW=(n:number,min=PANEL_MIN)=>Math.round(Math.min(PANEL_MAX,Math.max(min,n))/4)*4;
-export const setPanelWidth=(side:ShellSide,w:number)=>{state={...state,[side==='left'?'wl':'wr']:clampW(w,side==='left'?PANEL_MIN:PANEL_MIN_R)};emit();try{localStorage.setItem('semilab.panels',JSON.stringify({wl:state.wl,wr:state.wr}))}catch{}};
-const toggleBoth=()=>{const anyOpen=!state.left||!state.right;state={...state,left:anyOpen,right:anyOpen||isNarrow()};emit()};
+export const setPanelWidth=(side:ShellSide,w:number)=>{state={...state,[side==='left'?'wl':'wr']:clampW(w,side==='left'?PANEL_MIN:PANEL_MIN_R)};emit();saveAll()};
+const toggleBoth=()=>{const anyOpen=!state.left||!state.right;state={...state,left:anyOpen,right:anyOpen||isNarrow()};emit();saveAll()};
 
 /** 접힘 상태와 루트 요소에 붙일 속성을 돌려줍니다. Ctrl/⌘ + \ 로 양쪽을 함께 접고 펼칩니다. */
 export function useLessonShell(){
