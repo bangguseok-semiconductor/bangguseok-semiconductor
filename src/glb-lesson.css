@@ -89,7 +89,6 @@
 .glb-icon:disabled{color:var(--c-muted);opacity:.45;cursor:default}
 .glb-icon:focus-visible{outline:2px solid var(--c-accent);outline-offset:1px}
 .glb-sep{width:1px;height:20px;margin:0 var(--sp-1);background:var(--c-line)}
-.shell-page[data-shell-left=closed] .glb-player,.shell-page[data-shell-right=closed] .glb-player{top:64px}
 @media(max-width:900px){.glb-player{top:var(--sp-3)}}
 
 /* 부품 설명: 3D 위에 떠서, 누른 자리 가까이(아래 가운데)에서 바로 읽어요 */
