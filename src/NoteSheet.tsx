@@ -1,7 +1,8 @@
 import {useEffect,useRef,useState,useSyncExternalStore} from 'react';
 import type {Ref,PointerEvent as RPointerEvent,ClipboardEvent as RClipboardEvent,KeyboardEvent as RKeyboardEvent,CSSProperties} from 'react';
 import {Icon,type IconName} from './Icon';
-import {isRich,textToHtml,sanitizeNote,splitInk,joinInk,HL_COLORS,type HlColor,type InkStroke} from './noteHtml';
+import {isRich,textToHtml,sanitizeNote,splitInk,joinInk,hlHex,inkOn,paintMarks,type InkStroke} from './noteHtml';
+import {HlPalette,useHlPalette,penStore,usePenWidth,setPenWidth,PEN_SIZES} from './HlPalette';
 import {captureStage,hasStageCapture,onStageCapture} from './stageCapture';
 import {uiZoom} from './uiZoom';
 
@@ -15,9 +16,6 @@ const isMac=typeof navigator!=='undefined'&&/Mac|iPhone|iPad/.test(navigator.pla
 const key=(k:string)=>(isMac?'⌘':'Ctrl+')+k;
 type Pt={x:number;y:number};
 type Mode={b:boolean;u:boolean;h:boolean;pen:boolean};
-const INKS=[{c:'#1f2328',label:'검정'},{c:'#f07f1a',label:'주황'},{c:'#2f6fe0',label:'파랑'}];
-const HL_SWATCH:Record<HlColor,string>={yellow:'#ffe17a',green:'#b9f0b0',blue:'#b3dcff',pink:'#ffc2de',orange:'#ffcf9e'};
-const HL_LABEL:Record<HlColor,string>={yellow:'노랑',green:'초록',blue:'하늘',pink:'분홍',orange:'주황'};
 
 /** 이미지 파일을 메모에 넣기 좋게 줄여요(긴 변 720px, JPEG) */
 function shrinkImage(file:Blob):Promise<string|null>{
@@ -29,16 +27,16 @@ const pathOf=(p:number[])=>{if(p.length<4)return p.length===2?`M${p[0]} ${p[1]}l
 /** onSelection: 글을 드래그해 고르면 고른 글과 포인터 위치(키보드 선택이면 없음)를 알려 줘요 */
 export function NoteSheet({label,value,updated,failed,onChange,inputRef,onSelection,placeholder='메모',find=false,onCloseFind}:{label:string;value:string;updated?:string|null;failed?:boolean;onChange:(text:string)=>void;inputRef?:Ref<HTMLElement>;onSelection?:(text:string,point?:{x:number;y:number})=>void;placeholder?:string;find?:boolean;onCloseFind?:()=>void}){
  const ed=useRef<HTMLDivElement|null>(null),paper=useRef<HTMLDivElement>(null),last=useRef<string|null>(null),change=useRef(onChange);change.current=onChange;
- const[mode,setMode]=useState<Mode>({b:false,u:false,h:false,pen:false}),[hl,setHl]=useState<HlColor>('yellow'),[ink,setInkC]=useState(INKS[0].c),[eraser,setEraser]=useState(false);
+ const[mode,setMode]=useState<Mode>({b:false,u:false,h:false,pen:false}),[eraser,setEraser]=useState(false);
  const[strokes,setStrokes]=useState<InkStroke[]>([]),[live,setLive]=useState<InkStroke|null>(null),[paperH,setPaperH]=useState(0);
  const[empty,setEmpty]=useState(!value),[over,setOver]=useState(false),[flash,setFlash]=useState('');
  const strokesRef=useRef<InkStroke[]>([]);strokesRef.current=strokes;
- const modeRef=useRef(mode);modeRef.current=mode;const hlRef=useRef(hl);hlRef.current=hl;
+ const modeRef=useRef(mode);modeRef.current=mode;const penPal=penStore.use(),ink=penPal.list.find(x=>x.id===penPal.sel)?.hex??'#1f2328',penW=usePenWidth(),pal=useHlPalette(),hl=pal.list.find(x=>x.id===pal.sel)?.hex??'#ffe17a';const hlRef=useRef(hl);hlRef.current=hl;
  const canShot=useSyncExternalStore(onStageCapture,hasStageCapture,()=>false);
  const setRef=(el:HTMLDivElement|null)=>{ed.current=el;const r=inputRef;if(!r)return;if(typeof r==='function')r(el);else (r as {current:HTMLElement|null}).current=el};
 
  /* 밖에서 다른 메모로 바뀌면 내용을 새로 채워요(내가 방금 쓴 내용이면 그대로 둠) */
- useEffect(()=>{const el=ed.current;if(!el||value===last.current)return;const {html,ink}=splitInk(value||'');el.innerHTML=html?(isRich(html)?sanitizeNote(html):textToHtml(html)):'';setStrokes(ink);last.current=value;setEmpty(!html&&!ink.length)},[value]);
+ useEffect(()=>{const el=ed.current;if(!el||value===last.current)return;const {html,ink}=splitInk(value||'');el.innerHTML=html?(isRich(html)?sanitizeNote(html):textToHtml(html)):'';paintMarks(el);setStrokes(ink);last.current=value;setEmpty(!html&&!ink.length)},[value]);
  const emit=(nextInk:InkStroke[]=strokesRef.current)=>{const el=ed.current;if(!el)return;const html=sanitizeNote(el.innerHTML);const v=joinInk(html,nextInk);last.current=v;setEmpty(!html);change.current(v)};
  /* 그림이 덮을 높이 = 메모 내용 높이 */
  useEffect(()=>{const el=ed.current;if(!el)return;const ro=new ResizeObserver(()=>setPaperH(el.offsetHeight));ro.observe(el);return()=>ro.disconnect()},[]);
@@ -48,15 +46,15 @@ export function NoteSheet({label,value,updated,failed,onChange,inputRef,onSelect
  const selInEditor=()=>{const s=getSelection();return s&&s.rangeCount&&!s.isCollapsed&&inEditor(s.anchorNode)&&inEditor(s.focusNode)?s:null};
  /* 고른 글에 켜 둔 서식을 적용 (이미 같은 서식이면 그대로) */
  const applyHl=(s:Selection)=>{const r=s.getRangeAt(0),c=hlRef.current;const m=markOf(s.anchorNode);
-  if(m&&m===markOf(s.focusNode)&&(m.dataset.c||'yellow')===c){m.replaceWith(...m.childNodes);return}
-  const mark=document.createElement('mark');if(c!=='yellow')mark.dataset.c=c;mark.appendChild(r.extractContents());mark.querySelectorAll('mark').forEach(x=>x.replaceWith(...x.childNodes));r.insertNode(mark);s.removeAllRanges();const nr=document.createRange();nr.setStartAfter(mark);nr.collapse(true);s.addRange(nr)};
+  if(m&&m===markOf(s.focusNode)&&hlHex(m.dataset.c)===c){m.replaceWith(...m.childNodes);return}
+  const mark=document.createElement('mark');mark.dataset.c=c;mark.style.background=c;mark.style.color=inkOn(c);mark.appendChild(r.extractContents());mark.querySelectorAll('mark').forEach(x=>x.replaceWith(...x.childNodes));r.insertNode(mark);s.removeAllRanges();const nr=document.createRange();nr.setStartAfter(mark);nr.collapse(true);s.addRange(nr)};
  const applyModes=(m:Partial<Mode>=modeRef.current)=>{const s=selInEditor();if(!s)return false;
   if(m.b&&!document.queryCommandState('bold'))document.execCommand('bold');
   if(m.u&&!document.queryCommandState('underline'))document.execCommand('underline');
   if(m.h)applyHl(s);
   emit();return true};
  const toggle=(k:'b'|'u'|'h')=>{const on=!mode[k];const next={...mode,[k]:on,...(k==='h'&&on?{pen:false}:{})};setMode(next);if(on)applyModes({[k]:true});if(!on&&k!=='h'&&selInEditor()==null)ed.current?.focus()};
- const pickHl=(c:HlColor)=>{setHl(c);hlRef.current=c;if(!mode.h)setMode(m=>({...m,h:true,pen:false}));applyModes({h:true})};
+ const pickHl=(c:string)=>{hlRef.current=c;if(!mode.h)setMode(m=>({...m,h:true,pen:false}));applyModes({h:true})};
  /* 드래그로 글을 다 고른 순간(마우스 · 터치 · Shift+방향키) 켜 둔 서식 적용 */
  const afterSelect=()=>{const m=modeRef.current;if(m.b||m.u||m.h)applyModes()};
 
@@ -82,7 +80,7 @@ export function NoteSheet({label,value,updated,failed,onChange,inputRef,onSelect
  const drawing=useRef<InkStroke|null>(null);
  const at=(e:{clientX:number;clientY:number})=>{const p=paper.current!,r=p.getBoundingClientRect(),z=uiZoom();return [Math.max(0,Math.round((e.clientX-r.left)/z+p.scrollLeft)),Math.max(0,Math.round((e.clientY-r.top)/z+p.scrollTop))]};
  const eraseAt=(x:number,y:number)=>{const hit=strokesRef.current.filter(s=>{for(let i=0;i<s.p.length;i+=2)if(Math.hypot(s.p[i]-x,s.p[i+1]-y)<10)return true;return false});if(!hit.length)return;const next=strokesRef.current.filter(s=>!hit.includes(s));setStrokes(next);strokesRef.current=next;emit(next)};
- const penDown=(e:RPointerEvent<SVGSVGElement>)=>{if(e.button!==0)return;e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);const [x,y]=at(e);if(eraser){drawing.current={c:'erase',w:0,p:[]};eraseAt(x,y);return}drawing.current={c:ink,w:3,p:[x,y]};setLive({...drawing.current})};
+ const penDown=(e:RPointerEvent<SVGSVGElement>)=>{if(e.button!==0)return;e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);const [x,y]=at(e);if(eraser){drawing.current={c:'erase',w:0,p:[]};eraseAt(x,y);return}drawing.current={c:ink,w:penW,p:[x,y]};setLive({...drawing.current})};
  const penMove=(e:RPointerEvent<SVGSVGElement>)=>{const d=drawing.current;if(!d)return;const evs=e.nativeEvent.getCoalescedEvents?.()??[e.nativeEvent];for(const v of evs){const [x,y]=at(v);if(eraser){eraseAt(x,y);continue}const n=d.p.length;if(Math.hypot(d.p[n-2]-x,d.p[n-1]-y)>=1.5)d.p.push(x,y)}if(!eraser)setLive({...d,p:[...d.p]})};
  const penUp=()=>{const d=drawing.current;drawing.current=null;setLive(null);if(!d||d.c==='erase')return;const next=[...strokesRef.current,d];setStrokes(next);strokesRef.current=next;emit(next)};
  const undoInk=()=>{const next=strokesRef.current.slice(0,-1);setStrokes(next);strokesRef.current=next;emit(next)};
@@ -116,11 +114,12 @@ export function NoteSheet({label,value,updated,failed,onChange,inputRef,onSelect
   {flash&&<p className="note-flash" role="status">{flash}</p>}
   {failed&&<p className="note-sheet-error" role="status">저장하지 못했어요. 이미지가 많으면 몇 개 지워 주세요.</p>}
   <div className="note-tools" role="toolbar" aria-label="메모 꾸미기">
-   {tools.map(t=><button key={t.id} type="button" className="note-tool" aria-pressed={mode[t.id]} aria-label={t.label} data-tip={tip(t.id,t.label)} data-tip-pos="top" data-hl={t.id==='h'?hl:undefined} onMouseDown={e=>e.preventDefault()} onClick={()=>toggle(t.id)}><Icon name={t.icon}/>{t.id==='h'&&<i className="note-hl-bar" style={{'--sw':HL_SWATCH[hl]} as CSSProperties}/>}</button>)}
-   {mode.h&&<div className="note-swatches" role="radiogroup" aria-label="형광펜 색">{HL_COLORS.map(c=><button key={c} type="button" role="radio" aria-checked={hl===c} aria-label={HL_LABEL[c]+' 형광펜'} data-tip={HL_LABEL[c]} data-tip-pos="top" className="note-swatch" data-c={c} style={{'--sw':HL_SWATCH[c]} as CSSProperties} onMouseDown={e=>e.preventDefault()} onClick={()=>pickHl(c)}><i/></button>)}</div>}
-   <span className="note-tools-sep" aria-hidden="true"/>
+   {!mode.pen&&tools.map(t=><button key={t.id} type="button" className="note-tool" aria-pressed={mode[t.id]} aria-label={t.label} data-tip={tip(t.id,t.label)} data-tip-pos="top" data-hl={t.id==='h'?hl:undefined} onMouseDown={e=>e.preventDefault()} onClick={()=>toggle(t.id)}><Icon name={t.icon}/>{t.id==='h'&&<i className="note-hl-bar" style={{'--sw':hl} as CSSProperties}/>}</button>)}
+   {mode.h&&!mode.pen&&<HlPalette onPick={pickHl}/>}
+   {!mode.pen&&<span className="note-tools-sep" aria-hidden="true"/>}
    <button type="button" className="note-tool" aria-pressed={mode.pen} aria-label="펜" data-tip={mode.pen?'펜 끄기 (Esc)':'펜 · 메모 위 어디든 그리기'} data-tip-pos="top" onMouseDown={e=>e.preventDefault()} onClick={()=>{setMode(m=>({...m,pen:!m.pen,h:m.pen?m.h:false}));setEraser(false)}}><Icon name="pen"/></button>
-   {mode.pen&&<div className="note-swatches" role="radiogroup" aria-label="펜 색">{INKS.map(i=><button key={i.c} type="button" role="radio" aria-checked={!eraser&&ink===i.c} aria-label={i.label+' 펜'} data-tip={i.label} data-tip-pos="top" className="note-swatch is-ink" style={{'--sw':i.c} as CSSProperties} onClick={()=>{setInkC(i.c);setEraser(false)}}><i/></button>)}
+   {mode.pen&&<div className="note-pen-tools"><HlPalette store={penStore} kind="펜" onPick={()=>setEraser(false)}/>
+    <div className="note-widths" role="radiogroup" aria-label="펜 굵기">{PEN_SIZES.map(p=><button key={p.w} type="button" role="radio" aria-checked={!eraser&&penW===p.w} aria-label={'펜 굵기 '+p.label} data-tip={p.label} data-tip-pos="top" className="note-width" onClick={()=>{setPenWidth(p.w);setEraser(false)}}><i style={{width:p.w+3,height:p.w+3,background:ink}}/></button>)}</div>
     <button type="button" className="note-tool" aria-pressed={eraser} aria-label="지우개" data-tip="지우개 · 획을 문질러 지우기" data-tip-pos="top" onClick={()=>setEraser(v=>!v)}><Icon name="eraser"/></button>
     <button type="button" className="note-tool" aria-label="한 획 되돌리기" data-tip={`되돌리기 (${key('Z')})`} data-tip-pos="top" disabled={!strokes.length} onClick={undoInk}><Icon name="arrow-counterclockwise"/></button></div>}
    {canShot&&!mode.pen&&<button type="button" className="note-tool" aria-label="3D 화면 캡처해서 넣기" data-tip="3D 화면 캡처 · 모형을 길게 눌러 끌어와도 돼요" data-tip-pos="top" onMouseDown={e=>e.preventDefault()} onClick={shot}><Icon name="camera"/></button>}

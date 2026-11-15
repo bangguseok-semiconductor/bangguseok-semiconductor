@@ -46,6 +46,21 @@ export function MissionPage({lesson,profile,onExit,onLearn}:{lesson:MissionLesso
  const ready=q?.kind==='choice'?a!==null:Array.isArray(a)&&q&&a.length===(q.kind==='order'?q.items.length:0);
  const finalCorrect=questions.filter((qq,i)=>isRight(qq,answers[i]??null)).length,finalYield=Math.round(finalCorrect/Math.max(1,questions.length)*100),success=finalYield>=TARGET_YIELD;
  const lv=levels.find(l=>l.id===level)!;
+ /* 키보드로 풀기: 선택지는 A·B·C(또는 1·2·3), 순서 문제는 박스 순서대로 갈 자리 숫자를 입력(예: 4213), Enter로 정답 확인 · 다음 */
+ const[typed,setTyped]=useState<number[]>([]);
+ useEffect(()=>{setTyped([])},[at,round]);
+ const orderPool=q?.kind==='order'?shuffle(q.items,round*31+at):[];
+ const keys=useRef({q,done,ready,at,total:questions.length,typed,orderPool,phase,setA,check,finish});keys.current={q,done,ready,at,total:questions.length,typed,orderPool,phase,setA,check,finish};
+ useEffect(()=>{const onKey=(e:KeyboardEvent)=>{const k=keys.current;if(k.phase!=='play'||!k.q||e.metaKey||e.ctrlKey||e.altKey)return;const t=e.target as HTMLElement|null;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable||t.closest('.mission-memo,.study-hub')))return;
+  if(e.key==='Enter'){if(t&&t.tagName==='BUTTON'&&!t.closest('.mission-choices,.mission-order'))return;e.preventDefault();if(!k.done){if(k.ready)k.check()}else if(k.at<k.total-1)setAt(i=>i+1);else k.finish();return}
+  if(k.done)return;
+  if(k.q.kind==='choice'){const n=/^[a-z]$/i.test(e.key)?e.key.toLowerCase().charCodeAt(0)-97:/^[1-9]$/.test(e.key)?+e.key-1:-1;if(n>=0&&n<k.q.options.length){e.preventDefault();k.setA(n)}return}
+  const n=k.q.items.length;
+  if(e.key==='Backspace'){e.preventDefault();setTyped(x=>x.slice(0,-1));return}
+  if(e.key==='Escape'){setTyped([]);k.setA([]);return}
+  if(/^[1-9]$/.test(e.key)){const d=+e.key;e.preventDefault();if(d>n||k.typed.includes(d)||k.typed.length>=n)return;const next=[...k.typed,d];setTyped(next);
+   if(next.length===n){const v=new Array<string>(n);next.forEach((slot,box)=>{v[slot-1]=k.orderPool[box]});k.setA(v)}}};
+  window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey)},[]);
 
  return <main className="mission-page" data-memo={memoOpen||undefined}>
   <header className="mission-head">
@@ -62,7 +77,7 @@ export function MissionPage({lesson,profile,onExit,onLearn}:{lesson:MissionLesso
     <div className="mission-meta"><span>{lv.name} · {at+1} / {questions.length}</span><span>현재 공정 수율 <b>{yieldNow}%</b></span></div>
     <h1 ref={heading} tabIndex={-1} className="mission-q">Q. {q.q}</h1>
     {q.sub&&<p className="mission-sub">{q.sub}</p>}
-    {q.kind==='choice'?<Choice key={round+'-'+at} q={q} value={a as number|null} locked={done} onPick={setA}/>:<Order key={round+'-'+at} q={q} value={(a as string[]|null)??[]} locked={done} seed={round*31+at} onChange={setA}/>}
+    {q.kind==='choice'?<Choice key={round+'-'+at} q={q} value={a as number|null} locked={done} onPick={setA}/>:<Order key={round+'-'+at} q={q} value={(a as string[]|null)??[]} locked={done} seed={round*31+at} typed={typed} onChange={v=>{setTyped([]);setA(v)}}/>}
     {done&&<div className={'mission-feedback '+(isRight(q,a)?'is-right':'is-wrong')} role="status"><strong>{isRight(q,a)?'정답이에요':'아쉬워요'}</strong>{!isRight(q,a)&&<span>정답 · {q.kind==='choice'?q.options[q.answer]:q.items.join(' → ')}</span>}<p>{q.why}</p></div>}
     <div className="mission-actions">
      <button type="button" className="btn btn--secondary" disabled={at===0} onClick={()=>setAt(i=>i-1)}>이전</button>
@@ -122,11 +137,11 @@ export function MissionPage({lesson,profile,onExit,onLearn}:{lesson:MissionLesso
 
 function Choice({q,value,locked,onPick}:{q:Extract<MissionQ,{kind:'choice'}>;value:number|null;locked:boolean;onPick:(n:number)=>void}){
  return <div className="mission-choices" role="radiogroup">{q.options.map((o,i)=>{const state=locked?(i===q.answer?'right':i===value?'wrong':undefined):undefined;
-  return <button key={i} type="button" role="radio" aria-checked={value===i} data-state={state} disabled={locked} onClick={()=>onPick(i)}><span className="mission-choice-key">{String.fromCharCode(65+i)}</span><span>{o}</span>{state==='right'&&<Icon name="check2"/>}</button>})}</div>;
+  return <button key={i} type="button" role="radio" aria-checked={value===i} data-state={state} disabled={locked} onClick={()=>onPick(i)}><span className="mission-choice-key" title={`키보드 ${String.fromCharCode(65+i)} 또는 ${i+1}`}>{String.fromCharCode(65+i)}</span><span>{o}</span>{state==='right'&&<Icon name="check2"/>}</button>})}</div>;
 }
 
 /* 순서 문제: 위 카드를 눌러(또는 끌어) 아래 칸에 차례로 놓아요. 놓인 칸을 누르면 다시 빠져요. */
-function Order({q,value,locked,seed,onChange}:{q:Extract<MissionQ,{kind:'order'}>;value:string[];locked:boolean;seed:number;onChange:(v:string[])=>void}){
+function Order({q,value,locked,seed,typed=[],onChange}:{q:Extract<MissionQ,{kind:'order'}>;value:string[];locked:boolean;seed:number;typed?:number[];onChange:(v:string[])=>void}){
  const pool=useMemo(()=>shuffle(q.items,seed),[q,seed]);
  const[over,setOver]=useState<number|null>(null);
  const place=(item:string,slot?:number)=>{if(locked)return;const next=value.filter(v=>v!==item);if(slot===undefined||slot>=next.length)next.push(item);else next.splice(slot,0,item);onChange(next.slice(0,q.items.length))};
@@ -134,7 +149,8 @@ function Order({q,value,locked,seed,onChange}:{q:Extract<MissionQ,{kind:'order'}
  const drag=(item:string)=>(e:DragEvent)=>{e.dataTransfer.setData('text/x-mission',item);e.dataTransfer.effectAllowed='move'};
  const drop=(slot:number)=>(e:DragEvent)=>{e.preventDefault();setOver(null);const item=e.dataTransfer.getData('text/x-mission');if(item)place(item,slot)};
  return <div className="mission-order">
-  <div className="mission-pool" aria-label="고를 카드">{pool.map(item=>{const used=value.includes(item);return <button key={item} type="button" className="mission-card" draggable={!locked&&!used} onDragStart={drag(item)} disabled={locked||used} aria-pressed={used} onClick={()=>place(item)}>{item}</button>})}</div>
+  <div className="mission-pool" aria-label="고를 카드 · 숫자 키로 갈 자리를 차례로 입력">{pool.map((item,k)=>{const used=value.includes(item),to=typed[k];return <button key={item} type="button" className="mission-card" draggable={!locked&&!used} onDragStart={drag(item)} disabled={locked||used} aria-pressed={used} data-typed={to?'':undefined} onClick={()=>place(item)}><span className="mission-card-key" aria-hidden="true">{k+1}</span>{item}{to&&<small className="mission-card-to">→ {to}번째</small>}</button>})}</div>
+  {!locked&&<p className="mission-keyhint" aria-live="polite">{typed.length?<>입력 <b>{typed.join(' ')}</b>{typed.length<q.items.length?` · ${q.items.length-typed.length}개 더`:''} <kbd>⌫</kbd> 지우기</>:<>키보드: 카드 순서대로 갈 자리 숫자 입력 (예: {Array.from({length:q.items.length},(_,i)=>q.items.length-i).join('')}) · <kbd>Enter</kbd> 정답 확인</>}</p>}
   <ol className="mission-slots" aria-label="순서 칸">{q.items.map((_,i)=>{const item=value[i],state=locked&&item?(item===q.items[i]?'right':'wrong'):undefined;
    return <li key={i} data-over={over===i||undefined} data-state={state} onDragOver={e=>{if(!locked){e.preventDefault();setOver(i)}}} onDragLeave={()=>setOver(null)} onDrop={drop(i)}>
     {item?<button type="button" className="mission-card is-placed" disabled={locked} draggable={!locked} onDragStart={drag(item)} onClick={()=>remove(item)} aria-label={`${i+1}번째: ${item} · 눌러서 빼기`}>{item}</button>:<span className="mission-slot-num">{i+1}</span>}

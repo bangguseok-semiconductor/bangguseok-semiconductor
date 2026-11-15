@@ -1044,3 +1044,35 @@ body.is-shot-dragging .note-rich-editor{box-shadow:inset 0 0 0 1px var(--c-accen
 :root .note-tools .note-tool[data-hl]::after{display:none!important}
 .note-tool[data-hl]{position:relative}
 .note-hl-bar{position:absolute;left:9px;right:9px;bottom:5px;height:3px;border-radius:2px;background:var(--sw);pointer-events:none}
+/* 형광펜 팔레트 · 색 만들기 */
+.hl-palette{position:static;display:flex;align-items:center;gap:2px}
+.note-swatch[data-dragging]{transform:scale(1.15);cursor:grabbing!important;z-index:2}
+:root .note-tools .note-swatch.is-rainbow i{background:conic-gradient(#ff4d4d,#ffcf33,#5bdc5b,#33c9ff,#6b6bff,#ff4dd8,#ff4d4d)!important}
+.note-sheet .hl-picker{position:absolute;z-index:8;left:var(--sp-3);bottom:56px;width:248px;padding:var(--sp-3);box-sizing:border-box;border-radius:var(--r-lg);background:var(--c-surface);box-shadow:var(--sh-float);display:flex;flex-direction:column;gap:var(--sp-3);animation:pop-in .14s var(--ease) both}
+.hl-sv{position:relative;height:140px;border-radius:var(--r-md);background:linear-gradient(to top,#000,transparent),linear-gradient(to right,#fff,var(--hue));cursor:crosshair;touch-action:none;outline:none}
+.hl-hue{position:relative;height:12px;border-radius:999px;background:linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);cursor:pointer;touch-action:none;outline:none}
+.hl-sv b,.hl-hue b{position:absolute;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;box-shadow:0 0 0 2px #fff,0 1px 4px #0006;pointer-events:none}
+.hl-hue b{top:50%}
+.hl-sv:focus-visible,.hl-hue:focus-visible{box-shadow:0 0 0 2px var(--c-accent)}
+.hl-row{display:flex;align-items:center;gap:var(--sp-2)}
+.hl-preview{flex:none;width:32px;height:32px;border-radius:var(--r-sm);box-shadow:inset 0 0 0 1px #0000001f}
+.hl-hex{flex:1;min-width:0;display:flex;align-items:center;gap:var(--sp-2);height:32px;padding:0 var(--sp-2);border-radius:var(--r-sm);box-shadow:inset 0 0 0 1px var(--c-line);font-size:var(--fs-caption);color:var(--c-muted)}
+.hl-hex:focus-within{box-shadow:inset 0 0 0 1px var(--c-ink-2)}
+.hl-hex input{flex:1;min-width:0;height:100%;padding:0;border:0;outline:none;background:transparent;color:var(--c-ink);font:inherit;font-size:var(--fs-ui);font-variant-numeric:tabular-nums;letter-spacing:.02em!important;text-transform:uppercase}
+.hl-err{margin:0!important;font-size:var(--fs-caption)!important;color:var(--c-danger)!important}
+.hl-actions{display:flex;align-items:center;gap:var(--sp-2)}
+.hl-gap{flex:1}
+.note-tools{flex-wrap:nowrap!important}
+.note-tools .hl-palette{flex:0 1 auto;min-width:0}
+.note-tools .hl-palette .note-swatches{min-width:0;overflow-x:auto;scrollbar-width:none;padding:2px}
+.note-tools .hl-palette .note-swatches::-webkit-scrollbar{display:none}
+.note-pen-tools{display:flex;align-items:center;gap:2px;min-width:0}
+.note-widths{display:flex;align-items:center;gap:0;margin:0 2px;padding:0 2px;border-left:1px solid var(--c-line);border-right:1px solid var(--c-line)}
+:root .note-tools .note-width{display:grid;place-items:center;width:24px!important;height:24px!important;min-width:24px!important;min-height:24px!important;padding:0!important;border:0!important;border-radius:6px!important;background:transparent!important;cursor:pointer}
+.note-width i{display:block;border-radius:50%;pointer-events:none}
+:root .note-tools .note-width[aria-checked=true]{background:var(--c-selected)!important}
+.note-width:focus-visible{outline:2px solid var(--c-accent);outline-offset:-2px}
+/* 워크스페이스: 끌어서 여러 개 고르기 */
+.ws-marquee{position:fixed;z-index:60;border:1px solid var(--c-accent);border-radius:4px;background:color-mix(in srgb,var(--c-accent) 12%,transparent);pointer-events:none}
+body.is-marquee,body.is-marquee *{user-select:none!important;cursor:crosshair}
+.ws-main{position:relative}

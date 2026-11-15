@@ -26,3 +26,17 @@
 :root .lesson-nav-trigger svg.bi{width:16px!important;height:16px!important}
 @media(max-width:600px){body:has(.shell-page) .global-menu .menu-button{max-width:none!important;max-height:none!important}body:has(.shell-page) .global-menu .menu-button svg.bi{width:20px!important;height:20px!important}}
 @media(min-width:601px){:root .phone-back{display:none!important}}
+
+/* 학습 화면 제목 줄: 이름을 바꾸는 동안에도 한 줄 유지(접기 아이콘이 아래로 내려가지 않게) */
+.shell-page .workbench-panel-title:has(.lesson-title){flex-wrap:nowrap!important}
+.shell-page .workbench-panel-title>h1:has(.lesson-title-input){flex:1 1 0!important;min-width:0}
+.shell-page .workbench-panel-title .lesson-title-input{width:100%!important;min-width:0;box-sizing:border-box}
+.shell-page .workbench-panel-title>:is(.shell-toggle,.shell-back,.lesson-nav){flex:none}
+
+/* 아이콘 색 통일: 기본 = 진한 회색(ink-2), 올리면 = 글자색(ink), 켜진 상태는 각 버튼의 강조색 */
+:root :is(.glb-icon,.note-tool,.hub-icon,.shell-toggle,.shell-back,.lesson-nav-trigger,.glb-search-btn,.ws-selbar-close,.ws-more-btn,.ws-view button,.phone-back,.dock-btn,.tool-tile,.tour-collapse):not([aria-pressed=true]):not(:disabled){color:var(--c-ink-2)!important}
+:root :is(.glb-icon,.note-tool,.hub-icon,.shell-toggle,.shell-back,.lesson-nav-trigger,.glb-search-btn,.ws-selbar-close,.ws-more-btn,.ws-view button,.phone-back,.tour-collapse):not([aria-pressed=true]):not(:disabled):hover{color:var(--c-ink)!important}
+body:has(.shell-page) .global-menu .menu-button,body:has(.ws) .global-menu .menu-button{color:var(--c-ink-2)!important}
+body:has(.shell-page) .global-menu .menu-button:hover,body:has(.ws) .global-menu .menu-button:hover{color:var(--c-ink)!important}
+:root :is(.glb-icon,.note-tool,.hub-icon,.shell-toggle,.shell-back,.lesson-nav-trigger,.glb-search-btn,.phone-back,.menu-button,.shell-chip,.tour-collapse) svg.bi{color:inherit!important}
+.menu-wrap .dropdown button svg.bi.lead,.shell-chip{color:var(--c-ink-2)}

@@ -203,3 +203,16 @@
 .game-tile[data-level][aria-checked=true]>span:last-child{color:#ffffffe6}
 /* 축하 색종이: 화면 전체 맨 위, 클릭은 통과 */
 .confetti{position:fixed;inset:0;z-index:400;width:100vw;height:100vh;pointer-events:none}
+/* 키보드로 풀기 표시 */
+.mission-card{position:relative}
+.mission-card-key{display:inline-grid;place-items:center;flex:none;min-width:20px;height:20px;margin-right:8px;padding:0 5px;border-radius:6px;background:#ffffff1f;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;vertical-align:1px}
+.mission-card-to{display:block;margin-top:4px;font-size:12px;font-weight:700;color:var(--orange-400,#ff9a3d)}
+.mission-card[data-typed]{box-shadow:inset 0 0 0 2px var(--orange-500)}
+.mission-keyhint{margin:12px 0 0!important;font-size:12px!important;color:var(--gray-300)!important;text-align:center}
+.mission-keyhint b{color:#fff;letter-spacing:.12em}
+.mission-keyhint kbd,.mission-actions kbd{display:inline-grid;place-items:center;min-width:18px;height:18px;margin:0 2px;padding:0 4px;border-radius:4px;background:#ffffff1f;font:inherit;font-size:11px}
+.mission-card-key{background:var(--c-selected);color:var(--c-ink-2)}
+.mission-card-to{color:var(--c-accent-strong)}
+.mission-keyhint{color:var(--c-muted)!important}
+.mission-keyhint b{color:var(--c-ink)}
+.mission-keyhint kbd,.mission-actions kbd{background:var(--c-selected);color:var(--c-ink-2)}
