@@ -81,19 +81,21 @@ export function GlbStage(p:Props){
   };
 
   /* 좌우 패널이 캔버스 위에 떠 있어서, 실제로 보이는 가운데 영역에 맞춰 모형을 놓아요 */
-  let vis={l:0,r:0},visTick=0;
-  const measure=()=>{const W=el.clientWidth||1;if(window.innerWidth<=900)return {l:0,r:0};const b=el.getBoundingClientRect();
-   const side=(id:string)=>{const p=document.getElementById(id);if(!p)return null;const r=p.getBoundingClientRect();return r.width>0&&getComputedStyle(p).display!=='none'?r:null};
-   const lp=side('shell-panel-left'),rp=side('shell-panel-right');
-   const z=uiZoom();return {l:Math.max(0,Math.min(W/2,lp?(lp.right-b.left)/z:0)),r:Math.max(0,Math.min(W/2,rp?(b.right-rp.left)/z:0))}};
-  const applyView=()=>{const W=el.clientWidth||1,H=el.clientHeight||1;const cx=vis.l+(W-vis.l-vis.r)/2;camera.setViewOffset(W,H,W/2-cx,0,W,H);camera.updateProjectionMatrix()};
+  /* 휴대폰에선 패널이 아래 시트라서, 시트 위로 보이는 영역에 맞춰 모형을 올려요 */
+  let vis={l:0,r:0,b:0,t:0},visTick=0;
+  const measure=()=>{const W=el.clientWidth||1,H=el.clientHeight||1;const b=el.getBoundingClientRect();
+   const side=(id:string)=>{const p=document.getElementById(id);if(!p)return null;const r=p.getBoundingClientRect();return r.width>0&&r.height>0&&getComputedStyle(p).display!=='none'?r:null};
+   const lp=side('shell-panel-left'),rp=side('shell-panel-right'),z=uiZoom();
+   if(window.innerWidth<=600){const p=lp??rp;return {l:0,r:0,t:112,b:p?Math.max(0,Math.min(H*.8,(b.bottom-p.top)/z)):0}}
+   return {l:Math.max(0,Math.min(W/2,lp?(lp.right-b.left)/z:0)),r:Math.max(0,Math.min(W/2,rp?(b.right-rp.left)/z:0)),b:0,t:0}};
+  const applyView=()=>{const W=el.clientWidth||1,H=el.clientHeight||1;const cx=vis.l+(W-vis.l-vis.r)/2;camera.setViewOffset(W,H,W/2-cx,(vis.b-vis.t)/2,W,H);camera.updateProjectionMatrix()};
   const fit=(root:THREE.Object3D)=>{
    const box=new THREE.Box3();const grow=()=>{root.updateMatrixWorld(true);box.union(new THREE.Box3().setFromObject(root))};
    grow();if(L.mixer&&L.actions.length){const dur=Math.max(...L.actions.map(a=>a.getClip().duration));for(const a of L.actions)a.play();L.mixer.setTime(dur);grow();L.mixer.setTime(0);for(const a of L.actions)a.stop()}
    const size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3()),r=size.length()/2||1;L.size=r;
    vis=measure();applyView();
-   const W=el.clientWidth||1,H=el.clientHeight||1,vh=THREE.MathUtils.degToRad(camera.fov/2),vw=Math.atan(Math.tan(vh)*Math.max(.4,(W-vis.l-vis.r-48)/H));
-   const dist=r/Math.sin(Math.min(vh,vw))*1.08;
+   const W=el.clientWidth||1,H=el.clientHeight||1,vh=THREE.MathUtils.degToRad(camera.fov/2),vw=Math.atan(Math.tan(vh)*Math.max(.4,(W-vis.l-vis.r-48)/H)),vv=Math.atan(Math.tan(vh)*Math.max(.3,(H-vis.b-vis.t-24)/H));
+   const dist=r/Math.sin(Math.min(vv,vw))*1.08;
    homeTarget.copy(center);homeCam.copy(center).add(new THREE.Vector3(0.62,0.42,0.9).normalize().multiplyScalar(dist));
    camera.near=dist/100;camera.far=dist*20;camera.updateProjectionMatrix();
    camera.position.copy(homeCam);controls.target.copy(homeTarget);controls.minDistance=r*0.25;controls.maxDistance=dist*3;controls.update();
@@ -144,7 +146,7 @@ export function GlbStage(p:Props){
    demo:()=>{if(!L.mixer||!L.actions.length)return;L.demo=true;for(const a of L.actions){a.reset();a.setLoop(THREE.LoopOnce,1);a.clampWhenFinished=true;a.play()}L.mixer.timeScale=1;state('playing')},
    apply,
    pause:on=>{if(!L.mixer)return;L.mixer.timeScale=on?0:1;if(L.actions.some(a=>a.isRunning()))state(on?'paused':'playing')}};
-  const tick=()=>{frame=requestAnimationFrame(tick);if(++visTick%20===0){const v=measure();if(Math.abs(v.l-vis.l)>1||Math.abs(v.r-vis.r)>1){vis=v;applyView()}}const now=performance.now(),dt=Math.min((now-lastT)/1000,.1);lastT=now;L.mixer?.update(dt);rig.update();controls.update();renderer.render(scene,camera);
+  const tick=()=>{frame=requestAnimationFrame(tick);if(++visTick%8===0){const v=measure();if(Math.abs(v.l-vis.l)>1||Math.abs(v.r-vis.r)>1||Math.abs(v.b-vis.b)>1){vis=v;applyView()}}const now=performance.now(),dt=Math.min((now-lastT)/1000,.1);lastT=now;L.mixer?.update(dt);rig.update();controls.update();renderer.render(scene,camera);
    const g=(part:GlbPart|null)=>part?{target:L.groups.get(part)??[],name:part.name}:null;
    frames.update(camera,L.hover&&L.hover!==L.sel?g(L.hover):null,g(L.sel))};
   tick();load(props.current.src);

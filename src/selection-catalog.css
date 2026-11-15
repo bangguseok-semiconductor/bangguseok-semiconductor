@@ -249,3 +249,14 @@ svg.bi.flip{transform:scaleX(-1)}
 /* 카드끼리 3D로 뚫고 지나가지 않게: 무대는 평평하게, 원근은 카드마다 */
 .selection-page .catalog-coverflow{transform-style:flat;perspective:none}
 .selection-page .catalog-coverflow .deck-slot{transform-style:flat}
+/* 휴대폰: 탭과 검색을 한 줄에. 개수 배지는 숨기고 탭을 촘촘하게 */
+@media(max-width:600px){
+ .selection-page .catalog-bar{flex-wrap:nowrap!important;gap:6px;margin:16px auto;padding:0 16px;box-sizing:border-box;max-width:100%}
+ .selection-page .catalog-bar .catalog-tabs{flex:0 1 auto;min-width:0;gap:2px;padding:4px;overflow-x:auto;scrollbar-width:none}
+ .selection-page .catalog-bar .catalog-tabs::-webkit-scrollbar{display:none}
+ .selection-page .catalog-tabs button{flex:none;min-height:40px!important;padding:0 12px!important;font-size:14px!important;gap:0;white-space:nowrap}
+ .selection-page .catalog-tabs button span{display:none}
+ .catalog-search{flex:none;height:48px}
+ .catalog-search.is-open{width:auto;flex:1}
+ .selection-page .catalog-bar:has(.catalog-search.is-open) .catalog-tabs{display:none}
+}

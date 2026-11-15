@@ -1,4 +1,5 @@
 import {useEffect,useRef,useState} from 'react';
+import {Icon} from './Icon';
 import type {PointerEvent as ReactPointerEvent,RefObject} from 'react';
 type Props={disabled?:boolean;stage:number;progress:number;reset:number;onWorkProgress:(n:number)=>void;handle:RefObject<HTMLButtonElement|null>;guide:RefObject<HTMLDivElement|null>;path:RefObject<{x:number;y:number}>;moveTool:RefObject<((x:number,y:number)=>number)|null>};
 export function DirectWorkHandle(props:Props){
@@ -35,7 +36,7 @@ export function DirectWorkHandle(props:Props){
   <button ref={handle} className={'direct-cut-handle '+(dragging?'is-dragging':'')} aria-label={props.stage===1?"와이어 절단 손잡이":"웨이퍼 가공 도구 손잡이"} aria-describedby="direct-cut-help" aria-disabled={props.disabled||props.progress>=100}
    onPointerDown={startCut} onPointerMove={moveCut} onPointerUp={e=>stopCut(e.pointerId)} onPointerCancel={e=>stopCut(e.pointerId)} onLostPointerCapture={e=>stopCut(e.pointerId)}
    onKeyDown={e=>{if(!props.disabled&&props.stage>=1&&props.stage<=5&&props.progress<100&&!cut.current&&['ArrowDown','ArrowRight','Enter',' '].includes(e.key)){e.preventDefault();props.onWorkProgress(Math.min(100,props.progress+20))}}}>
-   <span aria-hidden="true">{props.progress>=100?'✓':props.stage===1?'↧':'✥'}</span>
+   <Icon name={props.progress>=100?'check-lg':props.stage===1?'arrow-bar-down':'arrows-move'} size={20}/>
   </button>
   <p id="direct-cut-help" className="direct-cut-help">{props.progress>=100?'이 장면 완료 · 다음 단계로 이동하세요':props.stage===1?'주황 손잡이를 잡고 점선을 따라 내려보세요':props.stage===4?'손잡이를 움직여 손상층 감소를 개념적으로 살펴보세요':'주황 손잡이를 잡고 웨이퍼 위를 문질러 보세요'}<small>개념 체험 · 조작 중 시점 고정 · 방향키 / Enter로도 진행</small></p>
  </div>;

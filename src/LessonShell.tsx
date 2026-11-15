@@ -9,28 +9,38 @@ import './lesson-shell.css';
 /* 학습 화면 공통 3단 레이아웃의 좌우 패널 접기 상태.
    피그마처럼 화면을 옮겨도 유지되도록 모듈 단위로 기억합니다(브라우저 저장소는 쓰지 않음). */
 export type ShellSide='left'|'right';
-type State={left:boolean;right:boolean;wl:number;wr:number};
+type Sheet='peek'|'half'|'full';
+type State={left:boolean;right:boolean;wl:number;wr:number;sheet:Sheet;dragH:number|null};
+/* 반응형: 좁은 화면(1199px 이하)에선 패널을 한 번에 하나만 펼쳐 3D 캔버스를 넓게 남겨요.
+   휴대폰(600px 이하)에선 펼친 패널이 아래에서 올라오는 시트가 되고, 손잡이로 높이를 바꿔요. */
+const mq=(q:string)=>typeof window!=='undefined'&&window.matchMedia?window.matchMedia(q):null;
+const narrowMq=mq('(max-width:1199px)'),phoneMq=mq('(max-width:600px)');
+const isNarrow=()=>!!narrowMq?.matches;
 /* 패널 너비: 피그마처럼 안쪽 가장자리를 끌어 조절 (4px 단위, 240~480px). 이 브라우저에 기억해요. */
 export const PANEL_MIN=240,PANEL_MIN_R=304,PANEL_MAX=480,PANEL_DEFAULT={wl:300,wr:352};
 const readWidths=()=>{try{const v=JSON.parse(localStorage.getItem('semilab.panels')||'{}');const ok=(n:unknown,d:number,min:number)=>typeof n==='number'&&n>=min&&n<=PANEL_MAX?n:d;return {wl:ok(v.wl,PANEL_DEFAULT.wl,PANEL_MIN),wr:ok(v.wr,PANEL_DEFAULT.wr,PANEL_MIN_R)}}catch{return {...PANEL_DEFAULT}}};
-let state:State={left:false,right:false,...readWidths()};
+let state:State={left:false,right:isNarrow(),...readWidths(),sheet:'half',dragH:null};
 const listeners=new Set<()=>void>();
 const emit=()=>listeners.forEach(l=>l());
 const subscribe=(l:()=>void)=>{listeners.add(l);return()=>{listeners.delete(l)}};
-export const toggleShellPanel=(side:ShellSide)=>{state={...state,[side]:!state[side]};emit()};
+narrowMq?.addEventListener?.('change',e=>{if(e.matches&&!state.left&&!state.right){state={...state,right:true};emit()}});
+export const toggleShellPanel=(side:ShellSide)=>{const opening=state[side],other:ShellSide=side==='left'?'right':'left';
+ state={...state,[side]:!opening,...(opening&&isNarrow()?{[other]:true}:{}),...(opening&&phoneMq?.matches&&state.sheet==='peek'?{sheet:'half' as Sheet}:{})};emit()};
+const setSheet=(sheet:Sheet,dragH:number|null=null)=>{state={...state,sheet,dragH};emit()};
+const setSheetDrag=(dragH:number|null)=>{state={...state,dragH};emit()};
 const focusLater=(selector:string)=>requestAnimationFrame(()=>document.querySelector<HTMLElement>(selector)?.focus());
 let bound=0;
 const onKey=(e:KeyboardEvent)=>{if(e.key!=='\\'||!(e.metaKey||e.ctrlKey))return;const t=e.target as HTMLElement|null;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable))return;e.preventDefault();toggleBoth()};
-export const setShellPanels=(closed:boolean)=>{state={...state,left:closed,right:closed};emit()};
+export const setShellPanels=(closed:boolean)=>{state={...state,left:closed,right:closed||isNarrow()};emit()};
 const clampW=(n:number,min=PANEL_MIN)=>Math.round(Math.min(PANEL_MAX,Math.max(min,n))/4)*4;
 export const setPanelWidth=(side:ShellSide,w:number)=>{state={...state,[side==='left'?'wl':'wr']:clampW(w,side==='left'?PANEL_MIN:PANEL_MIN_R)};emit();try{localStorage.setItem('semilab.panels',JSON.stringify({wl:state.wl,wr:state.wr}))}catch{}};
-const toggleBoth=()=>{const anyOpen=!state.left||!state.right;state={...state,left:anyOpen,right:anyOpen};emit()};
+const toggleBoth=()=>{const anyOpen=!state.left||!state.right;state={...state,left:anyOpen,right:anyOpen||isNarrow()};emit()};
 
 /** 접힘 상태와 루트 요소에 붙일 속성을 돌려줍니다. Ctrl/⌘ + \ 로 양쪽을 함께 접고 펼칩니다. */
 export function useLessonShell(){
  const s=useSyncExternalStore(subscribe,()=>state,()=>state);
  useEffect(()=>{if(bound++===0)window.addEventListener('keydown',onKey);return()=>{if(--bound===0)window.removeEventListener('keydown',onKey)}},[]);
- return {collapsed:s,attrs:{'data-shell-left':s.left?'closed':'open','data-shell-right':s.right?'closed':'open',style:{'--panel-l':s.wl+'px','--panel-r':s.wr+'px'} as CSSProperties}};
+ return {collapsed:s,attrs:{'data-shell-left':s.left?'closed':'open','data-shell-right':s.right?'closed':'open','data-sheet':s.sheet,'data-sheet-dragging':s.dragH!=null||undefined,style:{'--panel-l':s.wl+'px','--panel-r':s.wr+'px',...(s.dragH!=null?{'--sheet-h':s.dragH+'px'}:{})} as CSSProperties}};
 }
 
 const SidebarIcon=({side}:{side:ShellSide})=><Icon name={side==='left'?'layout-sidebar':'layout-sidebar-reverse'}/>;
@@ -51,9 +61,23 @@ function PanelResizer({side,width}:{side:ShellSide;width:number}){
  return <div className={'panel-resizer panel-resizer-'+side} data-dragging={dragging||undefined} role="separator" aria-orientation="vertical" aria-label={(side==='left'?'왼쪽':'오른쪽')+' 패널 너비'} aria-valuemin={side==='left'?PANEL_MIN:PANEL_MIN_R} aria-valuemax={PANEL_MAX} aria-valuenow={width} tabIndex={0} title="끌어서 너비 조절 · 두 번 누르면 기본 너비" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onLostPointerCapture={up} onDoubleClick={()=>setPanelWidth(side,side==='left'?PANEL_DEFAULT.wl:PANEL_DEFAULT.wr)} onKeyDown={key}/>;
 }
 
+/** 휴대폰 시트 손잡이: 끌어서 높이 조절, 누르면 크게 ↔ 반 높이. 방향키로도 조절해요 */
+const SHEET_LABEL:Record<Sheet,string>={peek:'접힘',half:'반 높이',full:'전체 높이'};
+function SheetHandle({side}:{side:ShellSide}){
+ const st=useRef<{y:number;h:number;moved:boolean}|null>(null);
+ const snaps=()=>{const ih=window.innerHeight;return {peek:76,half:Math.round(ih*.52),full:ih-64} as Record<Sheet,number>};
+ const nearest=(h:number):Sheet=>{const sn=snaps();return (Object.keys(sn) as Sheet[]).reduce((a,b)=>Math.abs(sn[b]-h)<Math.abs(sn[a]-h)?b:a)};
+ const down=(e:RPointerEvent<HTMLButtonElement>)=>{if(e.button!==0)return;const p=document.getElementById('shell-panel-'+side);st.current={y:e.clientY,h:p?.getBoundingClientRect().height??snaps().half,moved:false};e.currentTarget.setPointerCapture?.(e.pointerId)};
+ const move=(e:RPointerEvent<HTMLButtonElement>)=>{const d=st.current;if(!d)return;const dy=e.clientY-d.y;if(!d.moved&&Math.abs(dy)<5)return;d.moved=true;setSheetDrag(Math.round(Math.min(window.innerHeight-48,Math.max(56,d.h-dy))))};
+ const up=()=>{const d=st.current;st.current=null;if(!d)return;if(!d.moved){setSheet(state.sheet==='full'?'half':state.sheet==='half'?'full':'half');return}setSheet(nearest(state.dragH??d.h))};
+ const order:Sheet[]=['peek','half','full'];
+ const key=(e:RKeyboardEvent<HTMLButtonElement>)=>{const i=order.indexOf(state.sheet);if(e.key==='ArrowUp'&&i<2)setSheet(order[i+1]);else if(e.key==='ArrowDown'&&i>0)setSheet(order[i-1]);else return;e.preventDefault()};
+ return <button type="button" className="sheet-handle" aria-label={`패널 높이 · ${SHEET_LABEL[state.sheet]} (누르거나 위아래로 끌기)`} aria-controls={'shell-panel-'+side} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onKeyDown={key}><i/></button>;
+}
+
 export function ShellChips({left:fallback,leftId,right}:{left:string;leftId?:string;right:string}){
  const {collapsed}=useLessonShell(),left=useLessonTitle(leftId,fallback);
- return <>{!collapsed.left&&<PanelResizer side="left" width={collapsed.wl}/>}{!collapsed.right&&<PanelResizer side="right" width={collapsed.wr}/>}{collapsed.left&&<button type="button" className="shell-chip shell-chip-left" data-tip="왼쪽 패널 펼치기" data-tip-pos="bottom" aria-label={'왼쪽 패널 펼치기 · '+left} aria-expanded="false" aria-controls="shell-panel-left" onClick={()=>{toggleShellPanel('left');focusLater('#shell-panel-left .shell-toggle')}}><span className="shell-chip-title">{left}</span><SidebarIcon side="left"/></button>}{collapsed.right&&<button type="button" className="shell-chip shell-chip-right" data-tip="오른쪽 패널 펼치기" data-tip-pos="bottom" aria-label={'오른쪽 패널 펼치기 · '+right} aria-expanded="false" aria-controls="shell-panel-right" onClick={()=>{toggleShellPanel('right');focusLater('#shell-panel-right .shell-toggle')}}><SidebarIcon side="right"/><span className="shell-chip-title">{right}</span></button>}</>;
+ return <>{!collapsed.left?<SheetHandle side="left"/>:!collapsed.right?<SheetHandle side="right"/>:null}{!collapsed.left&&<PanelResizer side="left" width={collapsed.wl}/>}{!collapsed.right&&<PanelResizer side="right" width={collapsed.wr}/>}{collapsed.left&&<button type="button" className="shell-chip shell-chip-left" data-tip="왼쪽 패널 펼치기" data-tip-pos="bottom" aria-label={'왼쪽 패널 펼치기 · '+left} aria-expanded="false" aria-controls="shell-panel-left" onClick={()=>{toggleShellPanel('left');focusLater('#shell-panel-left .shell-toggle')}}><span className="shell-chip-title">{left}</span><SidebarIcon side="left"/></button>}{collapsed.right&&<button type="button" className="shell-chip shell-chip-right" data-tip="오른쪽 패널 펼치기" data-tip-pos="bottom" aria-label={'오른쪽 패널 펼치기 · '+right} aria-expanded="false" aria-controls="shell-panel-right" onClick={()=>{toggleShellPanel('right');focusLater('#shell-panel-right .shell-toggle')}}><SidebarIcon side="right"/><span className="shell-chip-title">{right}</span></button>}</>;
 }
 
 /* 캔버스 하단 도구 막대 — 피그마식.
