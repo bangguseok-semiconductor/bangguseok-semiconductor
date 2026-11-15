@@ -239,3 +239,6 @@
 /* 제목 바로 오른쪽에 ⌄ (패널 접기 버튼은 맨 오른쪽 그대로) */
 .shell-page .workbench-panel-title:has(.lesson-nav)>h1{flex:0 1 auto!important}
 .shell-page .workbench-panel-title>.lesson-nav{order:2;margin-right:auto}
+/* 핵심: 주황을 더 적극적으로 — 옅은 주황 바탕 + 주황 테두리 + 채운 '핵심' 배지 */
+.glb-key{align-items:flex-start;gap:var(--sp-3)!important;padding:var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-3)!important;border:1px solid color-mix(in srgb,var(--c-accent) 45%,transparent);background:var(--c-accent-soft)!important;color:var(--c-ink)!important;line-height:1.6}
+.glb-key b{display:inline-grid;place-items:center;flex:none;height:22px;margin-top:1px;padding:0 8px;border-radius:var(--r-pill);background:var(--c-accent);color:var(--gray-0)!important;font-size:11px;font-weight:var(--fw-bold);line-height:1}

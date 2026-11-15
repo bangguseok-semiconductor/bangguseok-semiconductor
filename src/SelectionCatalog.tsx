@@ -49,7 +49,7 @@ export function SelectionCatalog({selected,tab,onSelect,onTab,onOpen}:{selected:
  const q=query.trim().toLowerCase().replace(/\s+/g,'');
  const found=q?(tabs.find(t=>t.id==='all')!.items).filter(id=>{const m=modules[id];return [m.title,'sub' in m?m.sub:'',m.copy,area[id],keywords[id]].join(' ').toLowerCase().replace(/\s+/g,'').includes(q)}):null;
  const items=found&&found.length?found:found?[selected]:tabs.find(t=>t.id===tab)!.items,noResult=!!found&&found.length===0,n=items.length,index=Math.max(0,items.indexOf(selected)),current=items[index],info=modules[current];
- const flat=n<3,GAP=24;
+ const flat=true,GAP=24;/* 모든 탭: 커버플로(정면 카드 + 양옆으로 비스듬히 기운 카드) */
  const slots=flat?n:n*Math.ceil(10/n),step=flat?1:360/slots;
  useEffect(()=>{if(found&&found.length&&!found.includes(selected))onSelect(found[0])},[q]);
  const surface=useRef<HTMLDivElement>(null),tabRefs=useRef<(HTMLButtonElement|null)[]>([]);
@@ -59,7 +59,7 @@ export function SelectionCatalog({selected,tab,onSelect,onTab,onOpen}:{selected:
  useEffect(()=>{const el=surface.current;if(!el||typeof ResizeObserver==='undefined')return;const ro=new ResizeObserver(()=>setWidth(el.clientWidth||1000));ro.observe(el);setWidth(el.clientWidth||1000);return()=>ro.disconnect()},[]);
  useEffect(()=>{const on=()=>setVh(window.innerHeight/uiZoom());window.addEventListener('resize',on);return()=>window.removeEventListener('resize',on)},[]);
  /* 카드 크기는 화면 높이에 맞춰요: 제목·탭·설명·버튼이 차지하는 높이(약 450px)를 빼고 남는 만큼, 200~330px */
- const cardH=Math.round(Math.max(200,Math.min(330,vh-468,width*.22*1.25))),cardW=Math.round(cardH/1.25);
+ const cardH=Math.round(Math.max(200,Math.min(340,vh-430,width*.26))),cardW=cardH;/* 정사각 카드 */
  const radius=slots<2?0:Math.round(cardW/2/Math.tan(Math.PI/slots)*1.12);
  const clampF=(v:number)=>Math.min(0,Math.max(-(n-1),v));
  const frontSlot=(r:number)=>flat?-clampF(Math.round(r)):((Math.round(-r/step)%slots)+slots)%slots;
@@ -75,7 +75,7 @@ export function SelectionCatalog({selected,tab,onSelect,onTab,onOpen}:{selected:
  const rubber=(r:number)=>!flat?r:r>0?r*.3:r<-(n-1)?-(n-1)+(r+(n-1))*.3:r;
  const pick=(id:CatalogModule)=>{const k=items.indexOf(id);if(k<0)return;setRot(turnTo(k));onSelect(id)};
  const tabKey=(event:KeyboardEvent<HTMLButtonElement>,i:number)=>{let next=i;if(event.key==='ArrowRight')next=(i+1)%tabs.length;else if(event.key==='ArrowLeft')next=(i+tabs.length-1)%tabs.length;else if(event.key==='Home')next=0;else if(event.key==='End')next=tabs.length-1;else return;event.preventDefault();chooseTab(tabs[next].id);tabRefs.current[next]?.focus()};
- const degPerPx=flat?1/(cardW+GAP):step/(cardW*.9);
+ const degPerPx=flat?1/(cardW*.62):step/(cardW*.9);
  const down=(e:PointerEvent<HTMLDivElement>)=>{if(n<2||e.button!==0||e.isPrimary===false||gesture.current||(e.target as Element).closest('.catalog-cta,a,input'))return;gesture.current={id:e.pointerId,x:e.clientX,y:e.clientY,start:rotRef.current,moved:false,samples:[{t:performance.now(),r:rotRef.current}]};};
  const dragMove=(e:PointerEvent<HTMLDivElement>)=>{const g=gesture.current;if(!g||e.pointerId!==g.id)return;const dx=e.clientX-g.x;if(!g.moved){if(Math.abs(dx)<6)return;g.moved=true;setDragging(true);e.currentTarget.setPointerCapture?.(e.pointerId)}const r=rubber(g.start+dx*degPerPx);setRot(r);rotRef.current=r;g.samples.push({t:performance.now(),r});if(g.samples.length>6)g.samples.shift()};
  const up=(e:PointerEvent<HTMLDivElement>)=>{const g=gesture.current;if(!g||e.pointerId!==g.id)return;gesture.current=null;setDragging(false);if(!g.moved)return;justDragged.current=true;setTimeout(()=>{justDragged.current=false},0);
@@ -94,26 +94,18 @@ export function SelectionCatalog({selected,tab,onSelect,onTab,onOpen}:{selected:
  <div className={'catalog-ring-stage catalog-track'+(n<2?' is-single':'')+(flat?' is-flat':'')} data-dragging={dragging||undefined} ref={surface} role="region" aria-roledescription="캐러셀" aria-label="학습 카드 둘러보기 · 끌어서 돌리기" tabIndex={0} style={{'--card-w':cardW+'px','--card-h':cardH+'px'} as React.CSSProperties}
   onKeyDown={event=>{if(event.target!==event.currentTarget)return;if(event.key==='ArrowRight'){event.preventDefault();move(1)}else if(event.key==='ArrowLeft'){event.preventDefault();move(-1)}}}
   onPointerDown={down} onPointerMove={dragMove} onPointerUp={up} onPointerCancel={cancel} onWheel={wheel}>
-  {flat?<div key={tab} className="catalog-deck">
-   {items.map((id,k)=>{const m=modules[id],d=k+rot,near=Math.min(1,Math.abs(d)),isFront=k===front&&!dragging;
-    return <div key={id} className="ring-slot deck-slot" data-front={k===front||undefined} aria-hidden={k!==front} style={{transform:`translateX(${d*(cardW+GAP)}px) scale(${1-near*.08})`,filter:`brightness(${1-near*.42})`,zIndex:Math.round(100-near*10)} as React.CSSProperties}>
-     <article className="ring-card" onClick={()=>{if(!justDragged.current&&k!==front)pick(id)}}>
+  <div key={tab} className="catalog-deck catalog-coverflow">
+   {items.map((id,k)=>{const m=modules[id],d=k+rot,ad=Math.abs(d),sg=Math.sign(d),near=Math.min(1,ad),isFront=k===front&&!dragging;
+    /* 정면에서 멀어질수록: 옆으로 겹쳐 밀리고 · 안쪽을 보도록 기울고 · 조금 작아지고 · 2.5칸 너머는 사라져요 */
+    const x=sg*(ad<=1?ad*cardW*.66:cardW*.66+(ad-1)*cardW*.3),ang=sg*-Math.min(1,ad)*42,sc=1-Math.min(ad,3)*.07,fade=ad<=2?1:Math.max(0,1-(ad-2)*1.6);
+    return <div key={id} className="ring-slot deck-slot" data-front={k===front||undefined} aria-hidden={k!==front} style={{transform:`perspective(1500px) translateX(${x}px) translateZ(${-Math.min(ad,3)*60}px) rotateY(${ang}deg) scale(${sc})`,opacity:fade,filter:`brightness(${1-near*.22})`,visibility:fade<=0.01?'hidden':undefined,zIndex:Math.round(100-ad*10)} as React.CSSProperties}>
+     <article className="ring-card cover-card" onClick={()=>{if(!justDragged.current&&k!==front)pick(id)}}>
       <Preview id={id} live={isFront} gid={'catalog-wafer-'+k}/>
-      <div className="ring-card-foot"><strong>{m.title}</strong><span>{'sub' in m?m.sub:area[id]}</span></div>
+      <span className="sr-only">{m.title}</span>
      </article></div>})}
-  </div>:
-  <div key={tab} className="catalog-ring" style={{transform:`translateZ(${-radius}px) rotateY(${rot}deg)`}}>
-   {Array.from({length:slots},(_,s)=>{const id=items[s%n],m=modules[id],d=norm(s*step+rot),near=Math.abs(d)/step,isFront=s===front&&!dragging;
-    /* 정면 ±1칸까지 또렷하게, 그 너머는 빠르게 흐려짐 */
-    const fade=near<=1?1:Math.max(0,1-(near-1)*1.6),light=1-Math.min(1,near)*.42;
-    return <div key={s} className="ring-slot" data-front={s===front||undefined} aria-hidden={s!==front} style={{transform:`rotateY(${s*step}deg) translateZ(${radius+Math.max(0,1-near)*28}px)`,opacity:fade,filter:`brightness(${light})${near>1?` blur(${Math.min(6,(near-1)*8)}px)`:''}`,visibility:fade<=0.01?'hidden':undefined,zIndex:Math.round(100-near*10)} as React.CSSProperties}>
-     <article className="ring-card" onClick={()=>{if(!justDragged.current&&s!==front)pick(id)}}>
-      <Preview id={id} live={isFront} gid={'catalog-wafer-'+s}/>
-      <div className="ring-card-foot"><strong>{m.title}</strong><span>{'sub' in m?m.sub:area[id]}</span></div>
-     </article></div>})}
-  </div>}
+  </div>
  </div>
- <div className="catalog-info" aria-hidden="true"><p>{info.copy}</p></div>
- <div className="catalog-paging" data-single={items.length<2||undefined}>{items.length>1&&<button type="button" className="catalog-arrow" aria-label="이전 학습 카드" disabled={flat&&index===0} onClick={()=>move(-1)}><Icon name="chevron-left"/></button>}<div className="selector-switch catalog-dots" aria-label="학습 카드 선택">{items.map(id=><button key={id} className={current===id?'selected':''} aria-label={modules[id].label} aria-pressed={current===id} onClick={()=>pick(id)}/>)}</div>{items.length>1&&<button type="button" className="catalog-arrow" aria-label="다음 학습 카드" disabled={flat&&index===n-1} onClick={()=>move(1)}><Icon name="chevron-left" className="flip"/></button>}</div><p className="catalog-hint">{items.length>1?'좌우로 넘기거나 화살표를 눌러 선택해요. 키보드 방향키로도 이동할 수 있어요.':'현재 설계 학습은 MOSFET 1개예요. 전체 탭에서 다른 학습도 함께 볼 수 있어요.'}</p>
+ <div className="cover-caption" aria-hidden="true" key={current}><b>{info.title}</b><span>{'sub' in info?info.sub:area[current]}</span></div>
+ <div className="catalog-paging" data-single={items.length<2||undefined}><div className="selector-switch catalog-dots" aria-label="학습 카드 선택">{items.map(id=><button key={id} className={current===id?'selected':''} aria-label={modules[id].label} aria-pressed={current===id} onClick={()=>pick(id)}/>)}</div></div><p className="catalog-hint">{items.length>1?'좌우로 넘기거나 옆 카드를 눌러 선택해요. 키보드 방향키로도 이동할 수 있어요.':'현재 설계 학습은 MOSFET 1개예요. 전체 탭에서 다른 학습도 함께 볼 수 있어요.'}</p>
  <div className="selector-actions catalog-actions"><button type="button" className="catalog-cta is-primary" onClick={()=>onOpen(current)}>공부하기</button>{(current==='ffu'||current==='gown')&&<button type="button" className="catalog-cta is-secondary" onClick={()=>onOpen(current,true)}>{current==='ffu'?'퀴즈 풀기':'클린룸 개념 보기'}</button>}</div></>}</section></div>
 }

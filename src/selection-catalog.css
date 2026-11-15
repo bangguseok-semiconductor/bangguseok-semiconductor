@@ -220,3 +220,32 @@ svg.bi.flip{transform:scaleX(-1)}
 .catalog-search{background:#ffffff0d!important;box-shadow:inset 0 0 0 1px #cfd3d833!important;transition:box-shadow .15s var(--ease),width .2s var(--ease)}
 .catalog-search:hover{box-shadow:inset 0 0 0 1px #cfd3d859!important}
 .catalog-search:focus-within{box-shadow:inset 0 0 0 1px #ffffffa6!important}
+
+/* ── 커버플로 캐러셀 (visionOS 음악 앱 느낌) ──
+   정면 카드는 크고 또렷하게, 양옆 카드는 겹쳐 밀리며 안쪽을 보도록 기울어요. 카드 안엔 이미지만, 이름은 아래 유리 캡슐에. */
+.catalog-coverflow{position:relative;width:100%;height:100%;perspective:1500px;transform-style:preserve-3d}
+.catalog-coverflow .deck-slot{position:absolute;left:50%;top:50%;width:var(--card-w);height:var(--card-h);margin:calc(var(--card-h) / -2) 0 0 calc(var(--card-w) / -2);transform-style:preserve-3d;transition:transform .55s cubic-bezier(.2,.8,.2,1),filter .55s ease,opacity .4s ease;will-change:transform}
+[data-dragging] .catalog-coverflow .deck-slot{transition:none}
+.catalog-coverflow .cover-card{position:relative;width:100%;height:100%;padding:0!important;border:0!important;border-radius:28px!important;overflow:hidden;background:#e9ebee!important;box-shadow:0 24px 48px -12px #0b0d1066,0 6px 16px #0b0d1033!important;cursor:pointer;backdrop-filter:none!important}
+.catalog-coverflow .cover-card::after{content:'';position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px #ffffff59,inset 0 1px 0 #ffffff80;pointer-events:none}
+.catalog-coverflow [data-front] .cover-card{cursor:default}
+.catalog-coverflow .cover-card .catalog-preview{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;margin:0!important;border-radius:0!important;background:transparent!important}
+.catalog-coverflow .cover-card .catalog-thumb{border-radius:0}
+/* 정면 아래 이름표: 유리 캡슐 */
+.cover-caption{display:flex;flex-direction:column;align-items:center;gap:2px;width:max-content;max-width:calc(100% - 32px);margin:var(--sp-4) auto 0;padding:8px 20px;border-radius:18px;background:#ffffff1f;box-shadow:inset 0 0 0 1px #ffffff2e,0 8px 24px #0b0d1026;backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);color:#fff;text-align:center;animation:cover-cap .35s ease}
+.cover-caption b{font-size:15px;font-weight:700;letter-spacing:-.01em}
+.cover-caption span{font-size:12px;color:#ffffffb3}
+@keyframes cover-cap{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+/* 페이지 표시: 점 + 지금 카드는 긴 캡슐 */
+.catalog-paging{gap:0!important;padding:6px 10px!important;background:transparent!important;box-shadow:none!important;border:0!important}
+.selection-page .catalog-dots.selector-switch{display:flex!important;align-items:center;gap:0!important}
+.selection-page .catalog-dots.selector-switch button,.selection-page .catalog-dots.selector-switch button.selected{display:grid!important;place-items:center;width:auto!important;min-width:14px!important;height:32px!important;padding:0 4px!important;background:transparent!important;box-shadow:none!important}
+.selection-page .catalog-dots.selector-switch button::after{content:''!important;display:block!important;position:static!important;width:6px!important;height:6px!important;border-radius:999px!important;background:#ffffff59!important;transition:width .35s cubic-bezier(.2,.8,.2,1),background-color .2s ease}
+.selection-page .catalog-dots.selector-switch button:hover::after{background:#ffffff99!important}
+.selection-page .catalog-dots.selector-switch button.selected::after{width:36px!important;background:#ffffffd9!important}
+@media (prefers-reduced-motion:reduce){.catalog-coverflow .deck-slot,.catalog-dots button::after{transition:none!important}.cover-caption{animation:none}}
+/* 예전 링 카드의 top:8px 규칙을 이겨서, 카드가 무대 안에 딱 맞게 */
+.selection-page .catalog-coverflow .deck-slot{top:8px!important;margin:0 0 0 calc(var(--card-w) / -2)!important}
+/* 카드끼리 3D로 뚫고 지나가지 않게: 무대는 평평하게, 원근은 카드마다 */
+.selection-page .catalog-coverflow{transform-style:flat;perspective:none}
+.selection-page .catalog-coverflow .deck-slot{transform-style:flat}
