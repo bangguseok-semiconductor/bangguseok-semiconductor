@@ -3,7 +3,7 @@
    - 글자 크기는 6단계 위계 (--fs-*)
    - 색은 푸른빛이 살짝 도는 회색(slate) 기반, 주황은 포인트에만
    - 라이트/다크: <html data-theme="light|dark">, 지정이 없으면 시스템 설정을 따름
-   - 아이콘: Bootstrap Icons (src/Icon.tsx) */
+   - 아이콘: Lucide Icons (src/Icon.tsx) */
 :root{
  --font-sans:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;
 

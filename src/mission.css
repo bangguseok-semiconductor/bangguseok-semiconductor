@@ -192,3 +192,12 @@
 
 /* 결과 팝업 '나가기': 회색 글자만 있는 텍스트 버튼 (가운데) */
 .mission-result-actions .mission-result-exit{align-self:center;margin-top:var(--sp-1)}
+/* 레벨 색: 워크스페이스 레벨 칩과 같은 색 (입문 초록 · 기본 파랑 · 심화 주황) */
+.game-tile[data-level="1"]{--lv:#2f9e5f;--lv-ledge:#1d6b3f;--lv-ink:#7fd6a2}
+.game-tile[data-level="2"]{--lv:#3a74d9;--lv-ledge:#234c96;--lv-ink:#8fb6f5}
+.game-tile[data-level="3"]{--lv:var(--orange-500);--lv-ledge:#a9520c;--lv-ink:var(--orange-300,#ffb072)}
+.game-tile[data-level]>span:last-child{color:var(--lv-ink)}
+.game-tile[data-level]:hover:not([aria-checked=true]){border-color:color-mix(in srgb,var(--lv) 55%,var(--gray-600))}
+.game-tile[data-level][aria-checked=true]{border-color:var(--lv);background:var(--lv);box-shadow:0 var(--ledge) 0 var(--lv-ledge)}
+.game-tile[data-level][aria-checked=true]:active{box-shadow:0 0 0 var(--lv-ledge)}
+.game-tile[data-level][aria-checked=true]>span:last-child{color:#ffffffe6}

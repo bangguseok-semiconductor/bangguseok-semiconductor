@@ -13,6 +13,7 @@ import {LessonTitle,lessonTitle} from './LessonTitle';
 import {useLessonShell,PanelToggle,ShellChips,CanvasToolbar} from './LessonShell';
 import {GlbLesson} from './GlbLesson';
 import {readLessonNote,writeLessonNote} from './lessonNoteStore';
+import {noteToText} from './noteHtml';
 import {GowningLesson} from './GowningLesson';
 import {ffuParts,ffuReference} from './ffuParts';
 import {ConceptPanel} from './ConceptPanel';
@@ -74,9 +75,9 @@ function App({visitor,onWelcome,onLogout,active,pendingNav,onNavDone}:{visitor:V
     if(isGlbLesson(k)){try{const v=JSON.parse(ls(`semilab.glb.${k}.step`)||'null');const st=glbLessons[k].tracks.find(x=>x.id===v?.t)?.stages[v?.i];if(st)detail='이어서 학습 · '+st.title}catch{}}
     return [{id:k+'-progress',kind:'progress',title:lessonTitle(k,LESSON_NAMES[k]),module:area,detail,updated:t,icon,open:()=>open(k as Module),remove:()=>{try{const r=JSON.parse(localStorage.getItem('semilab.recent')||'{}');delete r[k];localStorage.setItem('semilab.recent',JSON.stringify(r));localStorage.removeItem(`semilab.glb.${k}.step`)}catch{}}} as WsItem]})})(),
   /* 학습 화면마다의 기본 메모 */
-  ...LESSONS.flatMap(k=>{const n=readLessonNote(k);if(!n.text.trim())return [];const name=lessonTitle(k,LESSON_NAMES[k]);return [{id:'note-'+k,kind:'memo',title:name+' 메모',module:name,detail:n.text.slice(0,80),updated:n.updated,icon:'file-earmark-text',open:()=>open(k as Module),remove:()=>{writeLessonNote(k,'')}} as WsItem]}),
+  ...LESSONS.flatMap(k=>{const n=readLessonNote(k);if(!n.text.trim())return [];const name=lessonTitle(k,LESSON_NAMES[k]);return [{id:'note-'+k,kind:'memo',title:name+' 메모',module:name,detail:noteToText(n.text).slice(0,80),updated:n.updated,icon:'file-earmark-text',open:()=>open(k as Module),remove:()=>{writeLessonNote(k,'')}} as WsItem]}),
   ...getNotebook().entries.filter(e=>e.kind==='memo'&&e.text.trim()).map(e=>({id:'nb-'+e.id,kind:'memo',title:entryTitle(e.text,'새 메모'),module:lessonTitle(e.lesson,LESSON_NAMES[e.lesson]??baseName(e.lesson)),detail:entryPreview(e.text),updated:e.updated,icon:'file-earmark-text',open:()=>{openEntry(e.lesson,'memo',e.id);setRightTab('notes');open(e.lesson as Module)},remove:()=>deleteEntry(e.id)}) as WsItem),
-  ...loadMissionResults().map(r=>({id:'mission-'+r.id,kind:'quiz',title:`${lessonTitle(r.lesson,missionNames[r.lesson])} 미션 · Level ${r.level}`,module:'퀴즈 미션',detail:`공정 수율 ${r.yield}%`,updated:r.date,icon:'trophy',wrong:r.wrong||undefined,open:()=>startMission(r.lesson),remove:()=>removeMissionResults([r.id])}) as WsItem),
+  ...loadMissionResults().map(r=>({id:'mission-'+r.id,kind:'quiz',title:`${lessonTitle(r.lesson,missionNames[r.lesson])} 미션`,level:r.level,module:'퀴즈 미션',detail:`공정 수율 ${r.yield}%`,updated:r.date,icon:'trophy',wrong:r.wrong||undefined,open:()=>startMission(r.lesson),remove:()=>removeMissionResults([r.id])}) as WsItem),
   ...attempts.map(a=>{const sc=a.answers.filter((x,j)=>x===questions[j].a).length;return {id:a.id,kind:'quiz',title:'FFU 개념 확인',module:moduleName('ffu'),detail:`${sc} / 3 정답`,updated:a.date,icon:'trophy',wrong:3-sc,open:()=>{setSelectedAttempt(a.id);setPage('results')},remove:()=>{const next=loadData(HISTORYKEY,validAttempts,[]).data.filter(x=>x.id!==a.id);setAttempts(next);persist(HISTORYKEY,next)}} as WsItem}),
  ];
  const profile=<ProfileBadge name={visitor.nickname} count={passed}/>;

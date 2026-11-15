@@ -12,3 +12,17 @@
 :root :is(.guide-portrait,.welcome-card input,.stage-instructions):not(#z){border-radius:var(--r-md)!important}
 :root :is(.entry-prototype):not(#z){border-radius:var(--r-pill)!important}
 :root :is(.chat-composer,.ws-card):not(#z){border-radius:var(--r-lg)!important}
+
+/* ════ 아이콘 버튼 크기 규칙 (정사각형) ════
+   작은 버튼: 32×32 안에 16 아이콘, 모서리 8 — 패널 · 막대 안의 아이콘 버튼
+   큰 버튼:  40×40 안에 20 아이콘, 모서리 12 — 캔버스 위에 떠 있는 버튼
+   제목 옆 ⌄: 24×24 안에 16 아이콘, 모서리 6
+   마우스를 올리면 이 정사각형 전체가 회색으로 칠해져요. */
+:root :is(.glb-icon,.note-tool,.hub-icon,.shell-toggle,.menu-wrap .menu-button,.ws-selbar-close,.ws-more-btn,.ws-view button,.glb-search-btn){width:32px!important;height:32px!important;min-width:32px!important;max-width:32px;min-height:32px!important;max-height:32px;flex:none!important;align-self:center;display:inline-grid;place-items:center;padding:0!important;box-sizing:border-box;border-radius:8px!important;aspect-ratio:1}
+:root :is(.glb-icon,.note-tool,.hub-icon,.shell-toggle,.menu-wrap .menu-button,.ws-selbar-close,.ws-more-btn,.ws-view button,.glb-search-btn) svg.bi{width:16px!important;height:16px!important}
+:root :is(.dock-btn,.phone-back,.catalog-search-open){width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;flex:none!important;display:grid;place-items:center;padding:0!important;box-sizing:border-box;border-radius:12px!important;aspect-ratio:1}
+:root :is(.dock-btn,.phone-back,.catalog-search-open) svg.bi{width:20px!important;height:20px!important}
+:root .lesson-nav-trigger{width:24px!important;height:24px!important;min-height:24px!important;flex:none!important;align-self:center;display:inline-grid;place-items:center;padding:0!important;border-radius:6px!important;aspect-ratio:1}
+:root .lesson-nav-trigger svg.bi{width:16px!important;height:16px!important}
+@media(max-width:600px){body:has(.shell-page) .global-menu .menu-button{max-width:none!important;max-height:none!important}body:has(.shell-page) .global-menu .menu-button svg.bi{width:20px!important;height:20px!important}}
+@media(min-width:601px){:root .phone-back{display:none!important}}

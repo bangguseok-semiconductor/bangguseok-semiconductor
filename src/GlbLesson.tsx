@@ -74,12 +74,14 @@ export function GlbLesson({id,onExit,onMission,onSwitch,profile,right,extra}:{id
  const total=def.tracks.reduce((n,t)=>n+t.stages.length,0),progress=Math.round(seen.size/total*100);
  const row=(circuit.a?2:0)+(circuit.b?1:0);
 
+ const progressRef=useRef<HTMLSpanElement|null>(null);
  return <main className="glb-page lesson-workbench shell-page" {...shell.attrs}>
   <ShellChips leftId={id} left={def.title} right="메모 · AI"/>
+  <button type="button" className="phone-back" aria-label="실습 선택으로 나가기" onClick={onExit}><Icon name="chevron-left" size={20}/></button>
   <div className="glb-grid shell-grid">
    <section className="glb-visual shell-center" aria-label="3D 학습 공간">
     <GlbStage src={src} label={`${def.title} · ${stage.title} 3D 모형`} play={stage.play} paused={paused} replay={replay} reset={reset} parts={def.parts}
-     interact={stage.interact} circuit={circuit} demo={demo} clear={clear} focus={focus} onParts={setPresent} onShot={(pt,url)=>setShot({part:pt,url})} onToggle={toggle} onState={setPlay} onPick={setPart}/>
+     interact={stage.interact} circuit={circuit} demo={demo} clear={clear} focus={focus} onParts={setPresent} onShot={(pt,url)=>setShot({part:pt,url})} onToggle={toggle} onState={setPlay} onPick={setPart} progress={progressRef}/>
     <div className="glb-player" role="group" aria-label="단계 재생">
      <button type="button" className="glb-icon" aria-label="이전 단계" data-tip="이전 단계" data-tip-pos="bottom" disabled={step===0} onClick={()=>go(step-1)}><Icon name="chevron-left"/></button>
      <span className="glb-player-title"><b>{String(step+1).padStart(2,'0')}</b><span>{stage.title}</span></span>
@@ -88,10 +90,11 @@ export function GlbLesson({id,onExit,onMission,onSwitch,profile,right,extra}:{id
       {play==='done'
        ?<button type="button" className="glb-icon" aria-label="다시 보기" data-tip="다시 보기" data-tip-pos="bottom" onClick={()=>{setPaused(false);setReplay(r=>r+1)}}><Icon name="arrow-repeat"/></button>
        :<button type="button" className="glb-icon" aria-label={paused?'재생':'일시정지'} data-tip={paused?'재생':'일시정지'} data-tip-pos="bottom" disabled={play==='loading'} onClick={()=>setPaused(v=>!v)}><Icon name={paused?'play-fill':'pause-fill'}/></button>}</>}
+     {animated&&<span ref={progressRef} className="glb-progress" data-state={play} role="progressbar" aria-label="재생 진행" aria-valuemin={0} aria-valuemax={100}><i/></span>}
      {stage.interact&&<><i className="glb-sep" aria-hidden="true"/><button type="button" className="glb-icon" aria-label="예시 재생" data-tip="예시 애니메이션 보기" data-tip-pos="bottom" disabled={play==='loading'||play==='playing'} onClick={()=>setDemo(d=>d+1)}><Icon name="play-fill"/></button></>}
     </div>
     {part&&tab==='steps'?<div className="glb-part-pop" role="status" aria-live="polite"><div><b>{part.name}</b><button type="button" className="glb-icon" aria-label="설명 닫기" onClick={()=>setClear(c=>c+1)}><Icon name="x-lg"/></button></div><p>{part.desc}</p></div>
-     :play!=='loading'&&!seenTip&&<p className="glb-part-tip" aria-hidden="true"><Icon name="hand-index" className="lead"/>부품을 누르면 설명이 나와요</p>}
+     :null}
     {toast&&<p key={toast.n} className="glb-toast" role="status">{toast.text}</p>}
     <CanvasToolbar tiles={[{id:'reset',label:'초기화',icon:'arrow-counterclockwise',onClick:()=>{setPaused(false);setReset(r=>r+1)}}]} view={{camera:true,labels:true}}/>
    </section>

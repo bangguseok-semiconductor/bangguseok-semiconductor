@@ -1,3 +1,4 @@
+import {noteToText} from './noteHtml';
 import {useSyncExternalStore} from 'react';
 
 /* 메모장·AI 어시스턴스의 이전 내역과 폴더.
@@ -75,5 +76,5 @@ export function moveToFolder(entryId:string,folderId:string|null){
  const assign={...book.assign};if(folderId)assign[entryId]=folderId;else delete assign[entryId];
  commit({...book,assign});
 }
-export const entryTitle=(text:string,fallback:string)=>text.split('\n').map(s=>s.trim()).find(Boolean)?.slice(0,60)||fallback;
-export const entryPreview=(text:string)=>{const lines=text.split('\n').map(s=>s.trim()).filter(Boolean);return lines.slice(1).join(' ').slice(0,80)};
+export const entryTitle=(text:string,fallback:string)=>noteToText(text).split('\n').map(s=>s.trim()).find(Boolean)?.slice(0,60)||fallback;
+export const entryPreview=(text:string)=>{const lines=noteToText(text).split('\n').map(s=>s.trim()).filter(Boolean);return lines.slice(1).join(' ').slice(0,80)};

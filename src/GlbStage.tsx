@@ -1,5 +1,6 @@
 import {useEffect,useRef,useState} from 'react';
 import {uiZoom} from './uiZoom';
+import {setStageCapture} from './stageCapture';
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
@@ -17,7 +18,7 @@ export type PlayState='loading'|'playing'|'paused'|'done'|'static'|'error';
 export type CircuitState={closed:boolean;high:boolean;a:boolean;b:boolean};
 export type CircuitKey=keyof CircuitState;
 type Props={src:string;label:string;play:'once'|'loop'|'none';paused:boolean;replay:number;reset:number;parts:GlbPart[];
- interact?:Interaction;circuit?:CircuitState;demo?:number;clear?:number;focus?:{part:GlbPart;n:number}|null;onParts?:(p:GlbPart[])=>void;onShot?:(part:GlbPart,url:string)=>void;onToggle?:(k:CircuitKey)=>void;onState?:(s:PlayState)=>void;onPick?:(p:GlbPart|null)=>void};
+ interact?:Interaction;circuit?:CircuitState;demo?:number;clear?:number;focus?:{part:GlbPart;n:number}|null;onParts?:(p:GlbPart[])=>void;onShot?:(part:GlbPart,url:string)=>void;onToggle?:(k:CircuitKey)=>void;onState?:(s:PlayState)=>void;progress?:{current:HTMLElement|null};onPick?:(p:GlbPart|null)=>void};
 
 const Q_ON=new THREE.Quaternion(0,0,0,1),Q_OFF=new THREE.Quaternion(0,0,0.3193088,0.9476507);
 const LEVERS:Record<string,CircuitKey>={'switch a lever':'closed','signal switch lever':'high','input a lever':'a','input b lever':'b'};
@@ -130,9 +131,32 @@ export function GlbStage(p:Props){
   const hitPart=(e:{clientX:number;clientY:number})=>{if(!L.root)return {part:null as GlbPart|null,lever:null as CircuitKey|null};const hit=pickAt(e,canvas,camera,[L.root],true);if(!hit)return {part:null,lever:null};
    let o:THREE.Object3D|null=hit.object,lever:CircuitKey|null=null;while(o&&o!==L.root){const k=LEVERS[normName(o.name||'')];if(k){lever=k;break}o=o.parent}
    return {part:L.partOf.get(hit.object)??null,lever}};
-  canvas.addEventListener('pointerdown',e=>{press={x:e.clientX,y:e.clientY}});
+  /* 지금 장면 찍기: 패널에 가려지지 않은 가운데 영역만 4:3으로 잘라 JPEG로 */
+  const capture=()=>{if(!L.root)return null;renderer.render(scene,camera);const W=el.clientWidth||1,H=el.clientHeight||1,pr=canvas.width/W;
+   const vw=W-vis.l-vis.r,vh=H-vis.b-vis.t,cw=Math.min(vw,vh*4/3)*.94,ch=cw*3/4,cx=vis.l+vw/2,cy=vis.t+vh/2;
+   const k=Math.min(1,720/(cw*pr)),o=document.createElement('canvas');o.width=Math.round(cw*pr*k);o.height=Math.round(ch*pr*k);const g=o.getContext('2d');if(!g)return null;
+   const bg=getComputedStyle(el.closest('.shell-page')||document.body).getPropertyValue('--c-canvas').trim();g.fillStyle=bg||'#f2f3f5';g.fillRect(0,0,o.width,o.height);
+   g.drawImage(canvas,(cx-cw/2)*pr,(cy-ch/2)*pr,cw*pr,ch*pr,0,0,o.width,o.height);return o.toDataURL('image/jpeg',.86)};
+  setStageCapture(capture);
+  /* 모형을 길게 누르면(0.45초) 장면이 사진처럼 떠오르고, 메모장으로 끌어다 놓으면 들어가요 */
+  let hold:{t:number;x:number;y:number}|null=null,dragging=false;
+  const cancelHold=()=>{if(hold){clearTimeout(hold.t);hold=null}};
+  const startShotDrag=(x:number,y:number)=>{hold=null;const url=capture();if(!url)return;press=null;dragging=true;controls.enabled=false;rig.cancel();
+   const ghost=document.createElement('div');ghost.className='shot-ghost';ghost.innerHTML=`<img alt="" src="${url}"><span>메모장에 놓기</span>`;document.body.appendChild(ghost);document.body.classList.add('is-shot-dragging');
+   let target:HTMLElement|null=null;
+   const pos=(px:number,py:number)=>{ghost.style.transform=`translate(${px}px,${py}px)`;const hit=document.elementFromPoint(px,py) as HTMLElement|null;const t=hit?.closest<HTMLElement>('.note-rich')?.querySelector<HTMLElement>('.note-rich-editor')??null;if(t!==target){target?.dispatchEvent(new CustomEvent('note-drop-hover',{detail:false}));target=t;target?.dispatchEvent(new CustomEvent('note-drop-hover',{detail:true}));ghost.dataset.over=target?'1':''}};
+   const move=(e:PointerEvent)=>pos(e.clientX,e.clientY);
+   const end=(e:PointerEvent|KeyboardEvent)=>{window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',end as (e:PointerEvent)=>void);window.removeEventListener('pointercancel',end as (e:PointerEvent)=>void);window.removeEventListener('keydown',esc);
+    const ok=e.type==='pointerup'&&target;if(ok)target!.dispatchEvent(new CustomEvent('note-drop-image',{detail:{url,x:(e as PointerEvent).clientX,y:(e as PointerEvent).clientY}}));else target?.dispatchEvent(new CustomEvent('note-drop-hover',{detail:false}));
+    ghost.dataset.drop=ok?'1':'0';setTimeout(()=>ghost.remove(),ok?10:180);document.body.classList.remove('is-shot-dragging');controls.enabled=true;setTimeout(()=>{dragging=false},0)};
+   const esc=(e:KeyboardEvent)=>{if(e.key==='Escape')end(e)};
+   window.addEventListener('pointermove',move);window.addEventListener('pointerup',end as (e:PointerEvent)=>void);window.addEventListener('pointercancel',end as (e:PointerEvent)=>void);window.addEventListener('keydown',esc);pos(x,y)};
+  canvas.addEventListener('pointerdown',e=>{press={x:e.clientX,y:e.clientY};cancelHold();if(e.button===0&&e.isPrimary){const x=e.clientX,y=e.clientY;hold={x,y,t:window.setTimeout(()=>startShotDrag(x,y),450)}}});
+  canvas.addEventListener('pointermove',e=>{if(hold&&Math.hypot(e.clientX-hold.x,e.clientY-hold.y)>6)cancelHold()});
+  canvas.addEventListener('pointerup',cancelHold);canvas.addEventListener('pointercancel',cancelHold);
+  canvas.addEventListener('contextmenu',e=>{if(dragging||hold)e.preventDefault()});
   canvas.addEventListener('pointermove',e=>{if(press)return;const h=hitPart(e);L.hover=h.part;canvas.style.cursor=h.part||(h.lever&&props.current.interact)?'pointer':''});
-  canvas.addEventListener('pointerup',e=>{const s=press;press=null;if(!s||Math.hypot(e.clientX-s.x,e.clientY-s.y)>6)return;const h=hitPart(e);
+  canvas.addEventListener('pointerup',e=>{const s=press;press=null;if(dragging||!s||Math.hypot(e.clientX-s.x,e.clientY-s.y)>6)return;const h=hitPart(e);
    if(h.lever&&props.current.interact){props.current.onToggle?.(h.lever)}
    select(h.part)});
   canvas.addEventListener('pointerleave',()=>{L.hover=null;canvas.style.cursor=''});
@@ -146,11 +170,11 @@ export function GlbStage(p:Props){
    demo:()=>{if(!L.mixer||!L.actions.length)return;L.demo=true;for(const a of L.actions){a.reset();a.setLoop(THREE.LoopOnce,1);a.clampWhenFinished=true;a.play()}L.mixer.timeScale=1;state('playing')},
    apply,
    pause:on=>{if(!L.mixer)return;L.mixer.timeScale=on?0:1;if(L.actions.some(a=>a.isRunning()))state(on?'paused':'playing')}};
-  const tick=()=>{frame=requestAnimationFrame(tick);if(++visTick%8===0){const v=measure();if(Math.abs(v.l-vis.l)>1||Math.abs(v.r-vis.r)>1||Math.abs(v.b-vis.b)>1){vis=v;applyView()}}const now=performance.now(),dt=Math.min((now-lastT)/1000,.1);lastT=now;L.mixer?.update(dt);rig.update();controls.update();renderer.render(scene,camera);
+  let lastP=-2;const tick=()=>{frame=requestAnimationFrame(tick);{const pe=props.current.progress?.current;if(pe){let p=-1;if(L.mixer&&L.actions.length){const dur=Math.max(...L.actions.map(a=>a.getClip().duration));if(dur>0){const t=Math.max(...L.actions.map(a=>a.time));p=L.actions.some(a=>a.loop===THREE.LoopRepeat&&a.isRunning())?(t%dur)/dur:Math.min(1,t/dur)}}p=Math.round(p*400)/400;if(p!==lastP){lastP=p;pe.style.setProperty('--p',String(Math.max(0,p)))}}}if(++visTick%8===0){const v=measure();if(Math.abs(v.l-vis.l)>1||Math.abs(v.r-vis.r)>1||Math.abs(v.b-vis.b)>1){vis=v;applyView()}}const now=performance.now(),dt=Math.min((now-lastT)/1000,.1);lastT=now;L.mixer?.update(dt);rig.update();controls.update();renderer.render(scene,camera);
    const g=(part:GlbPart|null)=>part?{target:L.groups.get(part)??[],name:part.name}:null;
    frames.update(camera,L.hover&&L.hover!==L.sel?g(L.hover):null,g(L.sel))};
   tick();load(props.current.src);
-  return()=>{disposed=true;api.current=null;shotR?.dispose();shotEnv?.dispose();frames.dispose();cancelAnimationFrame(frame);ro.disconnect();controls.dispose();if(L.root)dispose(L.root);pmrem.dispose();renderer.dispose();renderer.domElement.remove()};
+  return()=>{disposed=true;api.current=null;cancelHold();setStageCapture(null);shotR?.dispose();shotEnv?.dispose();frames.dispose();cancelAnimationFrame(frame);ro.disconnect();controls.dispose();if(L.root)dispose(L.root);pmrem.dispose();renderer.dispose();renderer.domElement.remove()};
  },[]);
 
  const first=useRef(true);
@@ -163,5 +187,5 @@ export function GlbStage(p:Props){
  useEffect(()=>{api.current?.pause(p.paused)},[p.paused]);
  useEffect(()=>{api.current?.apply()},[p.circuit?.closed,p.circuit?.high,p.circuit?.a,p.circuit?.b]);
 
- return <div ref={host} className="model-stage glb-stage" role="img" aria-label={p.label}>{status!=='ready'&&<p className="model-stage-status" role="status">{status==='loading'?'3D 모형을 불러오는 중이에요':'3D 모형을 불러오지 못했어요'}</p>}</div>;
+ return <div ref={host} className="model-stage glb-stage" role="img" aria-label={p.label}>{status!=='ready'&&<p className="model-stage-status" role="status" data-state={status}>{status==='loading'?'3D 모형을 불러오는 중이에요':'3D 모형을 불러오지 못했어요'}</p>}</div>;
 }

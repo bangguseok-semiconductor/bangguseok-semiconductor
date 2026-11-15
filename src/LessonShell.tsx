@@ -3,6 +3,7 @@ import {useEffect,useRef,useState,useSyncExternalStore} from 'react';
 import type {Ref,CSSProperties,PointerEvent as RPointerEvent,KeyboardEvent as RKeyboardEvent} from 'react';
 import {Icon,type IconName} from './Icon';
 import {useLessonTitle} from './LessonTitle';
+import {useHubTab,setHubTab,getHubTab} from './hubTab';
 import {useViewOptions,setViewPreset,setViewLabels,setViewEffects,resetViewPreset,viewPresets} from './viewOptions';
 import './lesson-shell.css';
 
@@ -24,9 +25,18 @@ const listeners=new Set<()=>void>();
 const emit=()=>listeners.forEach(l=>l());
 const subscribe=(l:()=>void)=>{listeners.add(l);return()=>{listeners.delete(l)}};
 narrowMq?.addEventListener?.('change',e=>{if(e.matches&&!state.left&&!state.right){state={...state,right:true};emit()}});
+/* 휴대폰에선 아래 시트가 늘 하나는 떠 있어요(접힘 높이까지만 내려감) */
+const ensureSheet=()=>{if(phoneMq?.matches&&state.left&&state.right){state={...state,left:false,sheet:state.sheet};emit()}};
+phoneMq?.addEventListener?.('change',ensureSheet);if(phoneMq?.matches&&state.left&&state.right)state={...state,left:false};
 export const toggleShellPanel=(side:ShellSide)=>{const opening=state[side],other:ShellSide=side==='left'?'right':'left';
  state={...state,[side]:!opening,...(opening&&isNarrow()?{[other]:true}:{}),...(opening&&phoneMq?.matches&&state.sheet==='peek'?{sheet:'half' as Sheet}:{})};emit()};
 const setSheet=(sheet:Sheet,dragH:number|null=null)=>{state={...state,sheet,dragH};emit()};
+/* 휴대폰 시트 탭: 학습 가이드(왼쪽 패널) · 메모 · AI(오른쪽 패널) */
+export type SheetTab='guide'|'notes'|'ai';
+const SHEET_TABS:{id:SheetTab;label:string}[]=[{id:'guide',label:'학습 가이드'},{id:'notes',label:'메모'},{id:'ai',label:'AI'}];
+let sheetDir:'next'|'prev'='next';
+const sheetTabOf=():SheetTab=>!state.left?'guide':getHubTab();
+const goSheetTab=(t:SheetTab)=>{const order=SHEET_TABS.map(x=>x.id);sheetDir=order.indexOf(t)>=order.indexOf(sheetTabOf())?'next':'prev';if(t!=='guide')setHubTab(t);state={...state,left:t!=='guide',right:t==='guide',sheet:state.sheet==='peek'?'half':state.sheet};emit()};
 const setSheetDrag=(dragH:number|null)=>{state={...state,dragH};emit()};
 const focusLater=(selector:string)=>requestAnimationFrame(()=>document.querySelector<HTMLElement>(selector)?.focus());
 let bound=0;
@@ -40,7 +50,7 @@ const toggleBoth=()=>{const anyOpen=!state.left||!state.right;state={...state,le
 export function useLessonShell(){
  const s=useSyncExternalStore(subscribe,()=>state,()=>state);
  useEffect(()=>{if(bound++===0)window.addEventListener('keydown',onKey);return()=>{if(--bound===0)window.removeEventListener('keydown',onKey)}},[]);
- return {collapsed:s,attrs:{'data-shell-left':s.left?'closed':'open','data-shell-right':s.right?'closed':'open','data-sheet':s.sheet,'data-sheet-dragging':s.dragH!=null||undefined,style:{'--panel-l':s.wl+'px','--panel-r':s.wr+'px',...(s.dragH!=null?{'--sheet-h':s.dragH+'px'}:{})} as CSSProperties}};
+ return {collapsed:s,attrs:{'data-shell-left':s.left?'closed':'open','data-shell-right':s.right?'closed':'open','data-sheet':s.sheet,'data-sheet-dir':sheetDir,'data-sheet-dragging':s.dragH!=null||undefined,style:{'--panel-l':s.wl+'px','--panel-r':s.wr+'px',...(s.dragH!=null?{'--sheet-h':s.dragH+'px'}:{})} as CSSProperties}};
 }
 
 const SidebarIcon=({side}:{side:ShellSide})=><Icon name={side==='left'?'layout-sidebar':'layout-sidebar-reverse'}/>;
@@ -75,9 +85,22 @@ function SheetHandle({side}:{side:ShellSide}){
  return <button type="button" className="sheet-handle" aria-label={`패널 높이 · ${SHEET_LABEL[state.sheet]} (누르거나 위아래로 끌기)`} aria-controls={'shell-panel-'+side} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onKeyDown={key}><i/></button>;
 }
 
-export function ShellChips({left:fallback,leftId,right}:{left:string;leftId?:string;right:string}){
+/** 휴대폰 아래 시트 맨 위 탭 막대 — 눌러서 바꾸거나, 시트를 좌우로 밀어 넘겨요 */
+function SheetTabs(){
+ useLessonShell();const hub=useHubTab();const cur:SheetTab=!state.left?'guide':hub;
+ /* 좌우로 밀어 넘기기: 터치 이벤트로 받아서, 목록이 세로로 스크롤돼도 끝까지 따라가요 */
+ useEffect(()=>{let st:{x:number;y:number}|null=null;
+  const down=(e:TouchEvent)=>{if(!phoneMq?.matches||e.touches.length!==1){st=null;return}const t=e.target as HTMLElement;if(!t.closest('#shell-panel-left,#shell-panel-right')||t.closest('.draw-pad,input,textarea,.glb-results'))return;st={x:e.touches[0].clientX,y:e.touches[0].clientY}};
+  const up=(e:TouchEvent)=>{const s=st;st=null;const p=e.changedTouches[0];if(!s||!p)return;const dx=p.clientX-s.x,dy=p.clientY-s.y;if(Math.abs(dx)<64||Math.abs(dx)<Math.abs(dy)*1.6)return;const sel=getSelection();if(sel&&!sel.isCollapsed)return;const order=SHEET_TABS.map(x=>x.id),i=order.indexOf(sheetTabOf()),n=i+(dx<0?1:-1);if(n>=0&&n<order.length)goSheetTab(order[n])};
+  document.addEventListener('touchstart',down,{passive:true,capture:true});document.addEventListener('touchend',up,{passive:true,capture:true});
+  return()=>{document.removeEventListener('touchstart',down,{capture:true});document.removeEventListener('touchend',up,{capture:true})}},[]);
+ const keys=(e:RKeyboardEvent<HTMLDivElement>)=>{const order=SHEET_TABS.map(x=>x.id),i=order.indexOf(cur);const n=e.key==='ArrowRight'?i+1:e.key==='ArrowLeft'?i-1:-1;if(n<0||n>=order.length)return;e.preventDefault();goSheetTab(order[n]);requestAnimationFrame(()=>document.querySelector<HTMLButtonElement>('.sheet-tabs [aria-selected=true]')?.focus())};
+ return <div className="sheet-tabs" role="tablist" aria-label="학습 패널" onKeyDown={keys}>{SHEET_TABS.map(t=><button key={t.id} type="button" role="tab" aria-selected={cur===t.id} tabIndex={cur===t.id?0:-1} aria-controls={t.id==='guide'?'shell-panel-left':'shell-panel-right'} onClick={()=>goSheetTab(t.id)}>{t.label}</button>)}<i className="sheet-tabs-ink" style={{'--i':SHEET_TABS.findIndex(t=>t.id===cur)} as CSSProperties} aria-hidden="true"/></div>;
+}
+
+export function ShellChips({left:fallback,leftId,right,rightIsHub=true}:{left:string;leftId?:string;right:string;rightIsHub?:boolean}){
  const {collapsed}=useLessonShell(),left=useLessonTitle(leftId,fallback);
- return <>{!collapsed.left?<SheetHandle side="left"/>:!collapsed.right?<SheetHandle side="right"/>:null}{!collapsed.left&&<PanelResizer side="left" width={collapsed.wl}/>}{!collapsed.right&&<PanelResizer side="right" width={collapsed.wr}/>}{collapsed.left&&<button type="button" className="shell-chip shell-chip-left" data-tip="왼쪽 패널 펼치기" data-tip-pos="bottom" aria-label={'왼쪽 패널 펼치기 · '+left} aria-expanded="false" aria-controls="shell-panel-left" onClick={()=>{toggleShellPanel('left');focusLater('#shell-panel-left .shell-toggle')}}><span className="shell-chip-title">{left}</span><SidebarIcon side="left"/></button>}{collapsed.right&&<button type="button" className="shell-chip shell-chip-right" data-tip="오른쪽 패널 펼치기" data-tip-pos="bottom" aria-label={'오른쪽 패널 펼치기 · '+right} aria-expanded="false" aria-controls="shell-panel-right" onClick={()=>{toggleShellPanel('right');focusLater('#shell-panel-right .shell-toggle')}}><SidebarIcon side="right"/><span className="shell-chip-title">{right}</span></button>}</>;
+ return <>{!collapsed.left?<SheetHandle side="left"/>:!collapsed.right?<SheetHandle side="right"/>:null}{rightIsHub&&<SheetTabs/>}{!collapsed.left&&<PanelResizer side="left" width={collapsed.wl}/>}{!collapsed.right&&<PanelResizer side="right" width={collapsed.wr}/>}{collapsed.left&&<button type="button" className="shell-chip shell-chip-left" data-tip="왼쪽 패널 펼치기" data-tip-pos="bottom" aria-label={'왼쪽 패널 펼치기 · '+left} aria-expanded="false" aria-controls="shell-panel-left" onClick={()=>{toggleShellPanel('left');focusLater('#shell-panel-left .shell-toggle')}}><span className="shell-chip-title">{left}</span><SidebarIcon side="left"/></button>}{collapsed.right&&<button type="button" className="shell-chip shell-chip-right" data-tip="오른쪽 패널 펼치기" data-tip-pos="bottom" aria-label={'오른쪽 패널 펼치기 · '+right} aria-expanded="false" aria-controls="shell-panel-right" onClick={()=>{toggleShellPanel('right');focusLater('#shell-panel-right .shell-toggle')}}><SidebarIcon side="right"/><span className="shell-chip-title">{right}</span></button>}</>;
 }
 
 /* 캔버스 하단 도구 막대 — 피그마식.

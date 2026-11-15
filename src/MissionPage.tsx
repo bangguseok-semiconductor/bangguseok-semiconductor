@@ -82,7 +82,7 @@ export function MissionPage({lesson,profile,onExit,onLearn}:{lesson:MissionLesso
    </>:<>
     <span className="mission-alert">{name}</span>
     <h1 id="mission-dialog-title" ref={heading} tabIndex={-1}>레벨을 골라 주세요</h1>
-    <div className="game-levels" role="radiogroup" aria-label="레벨">{levels.map(l=>{const n=missionQuestions(lesson,l.id).length;return <button key={l.id} type="button" role="radio" className="game-tile" aria-checked={level===l.id} onClick={()=>setLevel(l.id)} onDoubleClick={()=>{setLevel(l.id);setPhase('intro')}}>
+    <div className="game-levels" role="radiogroup" aria-label="레벨">{levels.map(l=>{const n=missionQuestions(lesson,l.id).length;return <button key={l.id} type="button" role="radio" className="game-tile" data-level={l.id} aria-checked={level===l.id} onClick={()=>setLevel(l.id)} onDoubleClick={()=>{setLevel(l.id);setPhase('intro')}}>
      <strong>{l.name}</strong><span>{l.label} · {n}문제</span></button>})}</div>
     <div className="mission-dialog-actions"><button type="button" className="btn btn--secondary btn--lg" onClick={onExit}>나가기</button><button type="button" className="btn btn--primary btn--lg" onClick={()=>setPhase('intro')}>다음으로</button></div>
    </>}

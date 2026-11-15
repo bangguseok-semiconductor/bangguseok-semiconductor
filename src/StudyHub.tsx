@@ -1,4 +1,5 @@
 import {useEffect,useRef,useState} from 'react';
+import {noteToText} from './noteHtml';
 import {uiZoom} from './uiZoom';
 import type {Ref,DragEvent} from 'react';
 import {Icon} from './Icon';
@@ -11,18 +12,19 @@ import {useNotebook,currentId,primaryId,openEntry,newEntry,editEntry,askInThread
    머리 줄: [AI 어시스턴스][메모장] ……… [이전 내역][검색][새 메모]
    - 이전 내역: 지난 메모·대화를 마지막 수정 순으로, 폴더로 묶어 보기 (끌어서 폴더에 넣기 · ⋯ 메뉴)
    - 메모에서 글을 드래그해 고르면 'AI에게 물어보기'가 떠서 고른 글을 채팅 입력칸에 붙여 줘요. */
-export type HubTab='notes'|'ai';
-type Primary={label:string;value:string;updated?:string|null;failed?:boolean;onChange:(text:string)=>void;inputRef?:Ref<HTMLTextAreaElement>};
+import {useHubTab,setHubTab,type HubTab} from './hubTab';
+export type {HubTab};
+type Primary={label:string;value:string;updated?:string|null;failed?:boolean;onChange:(text:string)=>void;inputRef?:Ref<HTMLElement>};
 type Row={id:string;title:string;preview:string;updated?:string|null;primary?:boolean};
 
 export function StudyHub({lesson,ai=true,primary,tab:ctrlTab,onTab}:{lesson:string;ai?:boolean;primary:Primary;tab?:HubTab;onTab?:(t:HubTab)=>void}){
  const book=useNotebook();
- const[ownTab,setOwnTab]=useState<HubTab>('notes');const tab=ai?(ctrlTab??ownTab):'notes';
- const setTab=(t:HubTab)=>{setOwnTab(t);onTab?.(t)};
+ const ownTab=useHubTab();const tab=ai?(ctrlTab??ownTab):'notes';
+ const setTab=(t:HubTab)=>{setHubTab(t);onTab?.(t)};
  const kind:HubKind=tab==='ai'?'ai':'memo';
  const[view,setView]=useState<'current'|'history'>('current'),[query,setQuery]=useState(''),[draft,setDraft]=useState('');
  const[pick,setPick]=useState<{text:string;x:number;y:number}|null>(null);
- const root=useRef<HTMLDivElement>(null),search=useRef<HTMLInputElement>(null),ask=useRef<HTMLTextAreaElement>(null),memo=useRef<HTMLTextAreaElement|null>(null);
+ const root=useRef<HTMLDivElement>(null),search=useRef<HTMLInputElement>(null),ask=useRef<HTMLTextAreaElement>(null),memo=useRef<HTMLElement|null>(null);
  const cur=currentId(book,lesson,kind),entry=book.entries.find(e=>e.id===cur);
  useEffect(()=>{setPick(null)},[tab,view,cur]);
 
@@ -37,7 +39,7 @@ export function StudyHub({lesson,ai=true,primary,tab:ctrlTab,onTab}:{lesson:stri
  };
  const askAI=()=>{if(!pick)return;setDraft(d=>(d.trim()?d.trim()+'\n\n':'')+'“'+pick.text+'”\n');setPick(null);setTab('ai');setView('current');requestAnimationFrame(()=>{const t=ask.current;if(t){t.focus();t.setSelectionRange(t.value.length,t.value.length)}})};
 
- const memoRef=(el:HTMLTextAreaElement|null)=>{memo.current=el;const r=primary.inputRef;if(!r)return;if(typeof r==='function')r(el);else (r as {current:HTMLTextAreaElement|null}).current=el};
+ const memoRef=(el:HTMLElement|null)=>{memo.current=el;const r=primary.inputRef;if(!r)return;if(typeof r==='function')r(el);else (r as {current:HTMLElement|null}).current=el};
  return <div ref={root} className="study-hub" data-tab={tab}>
   <div className="hub-bar">
    {ai?<div className="hub-tabs" role="tablist" aria-label="학습 도우미">
@@ -118,7 +120,7 @@ function History({lesson,kind,query,setQuery,searchRef,current,primary,onOpen,on
  ].sort((a,b)=>(b.updated?Date.parse(b.updated):0)-(a.updated?Date.parse(a.updated):0));
  const folders=book.folders.filter(f=>f.lesson===lesson&&f.kind===kind);
  const q=query.trim().toLowerCase();
- const fullText=(r:Row)=>r.primary?primary.value:(book.entries.find(e=>e.id===r.id)?.messages?.map(m=>m.text).join(' ')??'')+' '+(book.entries.find(e=>e.id===r.id)?.text??'');
+ const fullText=(r:Row)=>r.primary?noteToText(primary.value):(book.entries.find(e=>e.id===r.id)?.messages?.map(m=>m.text).join(' ')??'')+' '+noteToText(book.entries.find(e=>e.id===r.id)?.text??'');
  const found=q?rows.filter(r=>(r.title+' '+fullText(r)).toLowerCase().includes(q)):rows;
  const folderOf=(id:string)=>{const f=book.assign[id];return f&&folders.some(x=>x.id===f)?f:null};
  const inFolder=(fid:string|null)=>found.filter(r=>folderOf(r.id)===fid);
