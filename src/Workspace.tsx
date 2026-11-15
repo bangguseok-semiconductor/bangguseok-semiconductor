@@ -13,13 +13,15 @@ export type WsItem={id:string;kind:'file'|'memo'|'progress'|'quiz';title:string;
 type Filter='recent'|'memo'|'record'|'quiz'|'wrong';
 /* 순서: 학습 기록(공부한 학습) · 메모 · 퀴즈(미션 결과) · 최근 항목(전부 시간순) · 오답 모아보기 */
 const filters:{id:Filter;label:string;icon:IconName}[]=[
- {id:'record',label:'학습 기록',icon:'journal-text'},
+ {id:'record',label:'학습 기록',icon:'book-open'},
  {id:'memo',label:'메모',icon:'file-earmark-text'},
  {id:'quiz',label:'퀴즈',icon:'trophy'},
  {id:'recent',label:'최근 항목',icon:'clock-history'},
  {id:'wrong',label:'오답 모아보기',icon:'x-circle'},
 ];
-const kindLabel={file:'학습 파일',memo:'메모',progress:'학습하기',quiz:'퀴즈 결과'} as const;
+/* 목록 가운데 열: 학습 기록 = 분야(8대 공정 · 장비 · 설계), 메모 = 어느 학습의 메모인지, 퀴즈 = 오답 수, 그 밖 = 종류 */
+const midHead:Record<Filter,string>={record:'분야',memo:'학습 기록',quiz:'오답 수',recent:'종류',wrong:'종류'};
+const kindLabel={file:'학습 파일',memo:'메모',progress:'학습 기록',quiz:'퀴즈 결과'} as const;
 export const relTime=(iso?:string|null)=>{if(!iso)return '';const t=new Date(iso).getTime();if(Number.isNaN(t))return '';const m=Math.round((Date.now()-t)/60000);if(m<1)return '방금';if(m<60)return `${m}분 전`;const h=Math.round(m/60);if(h<24)return `${h}시간 전`;const d=Math.round(h/24);if(d<7)return `${d}일 전`;return new Intl.DateTimeFormat('ko-KR',{month:'long',day:'numeric'}).format(new Date(t))};
 /* 왼쪽 목록 너비 — 경계선을 끌어 200~400px로 조절, 이 브라우저에 기억해요 */
 const SIDE_MIN=200,SIDE_MAX=400,SIDE_DEF=264,clampSide=(w:number)=>Math.round(Math.min(SIDE_MAX,Math.max(SIDE_MIN,w)));
@@ -94,7 +96,7 @@ export function Workspace({items,profile,onLearn,onRemove}:{items:WsItem[];profi
      {more&&<div className="ws-more-menu" role="menu"><button type="button" role="menuitem" onClick={()=>{setMore(false);setSelecting(true)}}><Icon name="check2-circle" className="lead"/>여러 개 선택</button><hr/><button type="button" role="menuitem" className="is-danger" onClick={()=>{setMore(false);setConfirm(removable)}}><Icon name="trash3" className="lead"/>{noun} 모두 삭제</button></div>}</div></div></>}</header>
    {shown.length===0?<div className="ws-empty"><Icon name="folder2" size={32}/><h2>{q?'일치하는 항목이 없어요':filter==='wrong'?'틀린 문제가 없어요':filter==='quiz'?'아직 푼 퀴즈가 없어요':'아직 저장된 항목이 없어요'}</h2><p>학습 화면에서 메모를 쓰거나 퀴즈를 풀면 여기에 자동으로 저장돼요.</p><button type="button" className="ws-learn" onClick={onLearn}>학습하러 가기</button></div>:
     view==='grid'?<ul className="ws-grid" data-selecting={selecting||undefined}>{shown.map(i=><li key={i.id} data-ws-id={i.id} className="ws-cell" data-picked={picked.has(i.id)||undefined}><Check i={i}/><Trash i={i}/><button type="button" className="ws-card tilt-card" aria-pressed={selecting&&i.remove?picked.has(i.id):undefined} onClick={e=>itemClick(i,e)} {...tiltHandlers(3)}><span className="ws-thumb" data-kind={i.kind}><Icon name={i.icon} size={28}/>{i.kind==='memo'&&i.detail&&<span className="ws-thumb-text">{i.detail}</span>}</span><span className="ws-card-body"><strong>{i.title}</strong><LevelChip n={i.level}/><time dateTime={i.updated||undefined}>{i.updated?relTime(i.updated)+(i.kind==='file'?' 열어 봄':' 수정'):'저장 기록 없음'}</time></span></button></li>)}</ul>:
-    <div className="ws-list" role="table" aria-label={current.label}><div className="ws-row ws-row-head" role="row"><span role="columnheader">이름</span><span role="columnheader">{filter==='quiz'?'오답 수':'종류'}</span><span role="columnheader">마지막 수정</span></div>{shown.map(i=><div key={i.id} data-ws-id={i.id} className="ws-row-wrap" data-picked={picked.has(i.id)||undefined}><Check i={i}/><button type="button" className="ws-row" role="row" onClick={e=>itemClick(i,e)}><span role="cell" className="ws-row-name"><span className="ws-row-icon" data-kind={i.kind}><Icon name={i.icon}/></span><strong>{i.title}</strong><LevelChip n={i.level}/></span><span role="cell">{filter==='quiz'?(i.wrong?`${i.wrong}개`:'없음'):<>{kindLabel[i.kind]}{i.wrong?` · 오답 ${i.wrong}개`:''}</>}</span><span role="cell">{relTime(i.updated)}</span></button><Trash i={i}/></div>)}</div>}
+    <div className="ws-list" role="table" aria-label={current.label}><div className="ws-row ws-row-head" role="row"><span role="columnheader">이름</span><span role="columnheader">{midHead[filter]}</span><span role="columnheader">마지막 수정</span></div>{shown.map(i=><div key={i.id} data-ws-id={i.id} className="ws-row-wrap" data-picked={picked.has(i.id)||undefined}><Check i={i}/><button type="button" className="ws-row" role="row" onClick={e=>itemClick(i,e)}><span role="cell" className="ws-row-name"><span className="ws-row-icon" data-kind={i.kind}><Icon name={i.icon}/></span><strong>{i.title}</strong><LevelChip n={i.level}/></span><span role="cell">{filter==='quiz'?(i.wrong?`${i.wrong}개`:'없음'):filter==='record'||filter==='memo'?i.module:<>{kindLabel[i.kind]}{i.wrong?` · 오답 ${i.wrong}개`:''}</>}</span><span role="cell">{relTime(i.updated)}</span></button><Trash i={i}/></div>)}</div>}
   </main>
   {confirm&&<div className="ws-confirm-scrim" onClick={e=>{if(e.target===e.currentTarget)setConfirm(null)}}><div className="ws-confirm" role="alertdialog" aria-modal="true" aria-labelledby="ws-confirm-title" aria-describedby="ws-confirm-desc">
    <span className="ws-confirm-icon" aria-hidden="true"><Icon name="trash3" size={20}/></span>
