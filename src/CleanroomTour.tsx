@@ -24,7 +24,7 @@ const NON_SOLID_ROLES=['zone','effect','indicator','label_anchor','nav','trigger
 const WAYPOINTS=['WP_STEP01_Gowning','WP_STEP02_Corridor','WP_STEP03_AirShower','WP_STEP04_Cleanroom','WP_STEP05_Fab'];
 const LAYERS:(keyof TourLayers)[]=['equipment','airflow','cleanliness','ffu'];
 
-type Props={step:number;layers:TourLayers;selected?:string|null;onPart?:(p:TourPart|null)=>void;onReady?:(steps:GownStep[])=>void;onGown?:(state:{order:number;playing:boolean})=>void;onAir?:(t:number|null)=>void;api?:{current:TourApi|null};motion?:boolean};
+type Props={step:number;layers:TourLayers;selected?:string|null;onPart?:(p:TourPart|null)=>void;onReady?:(steps:GownStep[])=>void;onGown?:(state:{order:number;playing:boolean})=>void;onAir?:(t:number|null)=>void;api?:{current:TourApi|null};motion?:boolean;backdrop?:boolean;paused?:boolean};
 
 export function CleanroomTour(props:Props){
  const host=useRef<HTMLDivElement>(null),p=useRef(props);p.current=props;
@@ -121,7 +121,8 @@ export function CleanroomTour(props:Props){
    if(e.code==='Space'){const el=e.target as HTMLElement|null;if(el&&el!==document.body&&el.matches?.(':focus-visible')&&el.closest('button,a,[role=button],summary'))return;e.preventDefault();if(jumpY<=0&&jumpV===0)jumpV=3.1;return}
    if(!MOVE_KEYS.includes(e.code))return;if(e.code.startsWith('Arrow'))e.preventDefault();held.add(e.code);if(move&&!e.code.startsWith('Shift'))move=null};
   const keysUp=(e:KeyboardEvent)=>{held.delete(e.code)};const clearKeys=()=>held.clear();
-  window.addEventListener('keydown',keys);window.addEventListener('keyup',keysUp);window.addEventListener('blur',clearKeys);
+  const live=!p.current.backdrop;
+  if(live){window.addEventListener('keydown',keys);window.addEventListener('keyup',keysUp);window.addEventListener('blur',clearKeys)}
   /* 벽·장비에 부딪히면 멈추고, 문에 다가가면 열어 줘요 */
   const wallRay=new THREE.Raycaster();wallRay.far=.45;const dirV=new THREE.Vector3(),orig=new THREE.Vector3();
   const shown=(o:THREE.Object3D|null)=>{while(o){if(!o.visible)return false;o=o.parent}return true};
@@ -137,16 +138,20 @@ export function CleanroomTour(props:Props){
     const dx=(-sy*f+cy*r)*sp,dz=(-cy*f-sy*r)*sp;
     if(!blocked(dx,dz)){pos.x+=dx;pos.z+=dz}else{if(dx&&!blocked(dx,0))pos.x+=dx;if(dz&&!blocked(0,dz))pos.z+=dz}}
    if(jumpV!==0||jumpY>0){jumpV-=9.8*dt;jumpY+=jumpV*dt;if(jumpY<=0){jumpY=0;jumpV=0}}};
+  if(live){cv.addEventListener('pointerdown',down);cv.addEventListener('pointermove',moveH);cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',()=>{drag=null})}else cv.style.cursor='default';
   cv.addEventListener('contextmenu',e=>e.preventDefault());
 
-  const clock=new THREE.Clock();let lastAir=-1;
+  const clock=new THREE.Clock();let lastAir=-1,bdNext=0;
   const tick=()=>{frame=requestAnimationFrame(tick);const dt=Math.min(.05,clock.getDelta());
-   if(!paused)for(const m of mixers)m.update(dt);
+   if(!paused&&!p.current.paused)for(const m of mixers)m.update(dt);
    if(gown&&!gown.paused&&gown.time>=gownStop-1e-3){gown.time=Math.min(gownStop,gown.getClip().duration-1e-4);gown.paused=true;avMix?.update(0);p.current.onGown?.({order:gownOrder,playing:false})}
    if(air){const t=air.isRunning()?air.time:-1;if(t!==lastAir){lastAir=t;p.current.onAir?.(t>=0?t:null)}}
    if(move){const k=Math.min(1,(performance.now()-move.t0)/move.dur),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;pos.lerpVectors(from,to,e);pos.y=to.y+Math.sin(k*Math.PI*6)*.012*(1-k);if(k>=1)move=null}
    const reduce=p.current.motion===false;const f=reduce?1:1-Math.pow(.0009,dt);look.yaw+=(look.tyaw-look.yaw)*f;look.pitch+=(look.tpitch-look.pitch)*f;
-   if(!move)walk(dt);
+   if(p.current.backdrop){const t=performance.now()/1000,base=wpYaw[stepRef.current]??0;if(p.current.motion!==false&&!p.current.paused){look.tyaw=base+Math.sin(t*.11)*.32;look.tpitch=-.03+Math.sin(t*.07)*.04}
+    /* 에어샤워를 쉬지 않고 되풀이 */
+    if(air&&!p.current.paused&&!air.isRunning()){if(!bdNext)bdNext=t+2.5;else if(t>=bdNext){air.reset().play();bdNext=0}}}
+   else if(!move)walk(dt);
    camera.position.copy(pos);camera.position.y+=jumpY;camera.rotation.set(look.pitch,look.yaw,0,'YXZ');
    renderer.render(scene,camera)};
   tick();
@@ -155,7 +160,7 @@ export function CleanroomTour(props:Props){
  useEffect(()=>{applyStep.current(props.step)},[props.step]);
  useEffect(()=>{applyLayers.current(props.layers)},[props.layers]);
  useEffect(()=>{applySel.current(props.selected)},[props.selected]);
- return <div ref={host} className="cr-tour-canvas" aria-label="클린룸 3D 공간 — 끌어서 둘러보고, 장비를 누르면 설명이 나와요" role="img">
-  {status!=='ready'&&<p className="model-stage-status cr-tour-status" role="status" data-state={status}>{status==='error'?'3D 공간을 불러오지 못했어요':'클린룸을 불러오는 중이에요'}</p>}
+ return <div ref={host} className="cr-tour-canvas" data-backdrop={props.backdrop||undefined} data-state={status} aria-label={props.backdrop?'에어샤워실 3D 배경':'클린룸 3D 공간 — 끌어서 둘러보고, 장비를 누르면 설명이 나와요'} role="img">
+  {status!=='ready'&&!props.backdrop&&<p className="model-stage-status cr-tour-status" role="status" data-state={status}>{status==='error'?'3D 공간을 불러오지 못했어요':'클린룸을 불러오는 중이에요'}</p>}
  </div>;
 }

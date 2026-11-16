@@ -320,3 +320,51 @@
 .entry-tour .tour-keys>div{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-4)}
 .entry-tour .tour-keys dt{display:flex;gap:3px}.entry-tour .tour-keys dd{margin:0;white-space:nowrap}
 .entry-tour .tour-keys kbd{min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;display:inline-grid;place-items:center;border:1px solid var(--c-line);border-bottom-width:2px;border-radius:5px;background:var(--c-surface-2);font:inherit;font-size:11px;font-weight:var(--fw-semibold);color:var(--c-ink)}
+
+/* 착용 순서 머리줄: 제목 + 가벼운 텍스트 버튼 */
+.entry-tour .cr-block-head{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);min-height:28px}
+.entry-tour .cr-block-head h2{display:inline-flex;align-items:center;gap:var(--sp-2)}
+.entry-tour .cr-block-head .cr-ok{gap:2px;letter-spacing:0}.entry-tour .cr-block-head .cr-ok .bi{width:12px;height:12px}
+.entry-tour .cr-text-btn{display:inline-flex;align-items:center;gap:4px;height:28px;margin-right:calc(var(--sp-2) * -1);padding:0 var(--sp-2);border:0;border-radius:var(--r-sm);background:transparent;color:var(--c-accent-strong);font:inherit;font-size:var(--fs-caption);font-weight:var(--fw-semibold);cursor:pointer;white-space:nowrap}
+.entry-tour .cr-text-btn .bi{width:14px;height:14px}
+.entry-tour .cr-text-btn:hover:not(:disabled){background:var(--c-accent-soft)}
+.entry-tour .cr-text-btn:disabled{cursor:default;color:var(--c-muted)}
+.entry-tour .cr-text-btn:focus-visible{outline:2px solid var(--c-accent);outline-offset:1px}
+.cr-live-dot{width:6px;height:6px;margin:0 3px;border-radius:50%;background:var(--c-accent);animation:cr-pulse 1s ease-in-out infinite}
+@keyframes cr-pulse{50%{opacity:.3}}
+@media(prefers-reduced-motion:reduce){.cr-live-dot{animation:none}}
+
+/* ════ 클린룸 공부하기: 왼쪽 학습 정보 · 오른쪽 메모 (학습 화면과 같은 배치) ════ */
+.entry-tour .tour-panel-head{gap:var(--sp-1);padding:0 var(--sp-3) 0 var(--sp-2);min-height:56px;font-size:var(--fs-ui)}
+.entry-tour .tour-panel-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--fs-heading);font-weight:var(--fw-semibold);color:var(--c-ink);letter-spacing:0}
+.entry-tour .tour-memo-head2{padding-left:var(--sp-5)}
+.entry-tour .tour-panel-head .global-menu,.entry-tour .tour-float .global-menu{position:relative!important;top:auto!important;right:auto!important;z-index:auto}
+.entry-tour .tour-panel-head .menu-button,.entry-tour .tour-float .menu-button{width:32px;height:32px}
+.entry-tour .tour-memo-panel{position:fixed;z-index:15;display:flex;flex-direction:column;min-height:0;border-radius:var(--r-lg);background:var(--c-surface);box-shadow:var(--sh-panel);color:var(--c-ink);overflow:hidden}
+.entry-tour .tour-memo-panel[hidden]{display:none!important}
+.entry-tour .tour-memo-panel>.study-hub{flex:1;min-height:0}
+.entry-tour .tour-float{position:fixed;z-index:15;top:12px;display:flex;align-items:center;gap:var(--sp-1);height:48px;padding:0 var(--sp-2);border-radius:var(--r-lg);background:var(--c-surface);box-shadow:var(--sh-float);color:var(--c-ink)}
+.entry-tour .tour-float-left{left:12px}.entry-tour .tour-float-right{right:12px}
+.entry-tour .tour-float-title{padding:0 var(--sp-2) 0 var(--sp-1);font-size:var(--fs-heading);font-weight:var(--fw-semibold);white-space:nowrap}
+.tour-sheet-tabs{display:none}
+@media(min-width:901px){
+ :root .entry-tour .tour-panel,:root .entry-tour .tour-panel:not([data-menu]){top:12px;bottom:12px;left:12px;right:auto}
+ :root .entry-tour .tour-panel .tour-resizer{left:auto;right:-6px}
+ :root .entry-tour .tour-memo-panel{top:12px;right:12px;bottom:12px;width:340px}
+ :root .entry-tour .tour-steps{top:12px}
+}
+/* 좁은 화면: 둘 다 아래 시트, 머리의 탭으로 학습 정보 ↔ 메모 */
+@media(max-width:900px){
+ :root .entry-tour .tour-memo-panel{left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom,0px));height:min(54dvh,560px);border-radius:20px}
+ :root .entry-tour .tour-panel[data-sheet-off],:root .entry-tour .tour-memo-panel[data-sheet-off]{display:none!important}
+ .entry-tour .tour-sheet-tabs{display:flex;flex:1;gap:var(--sp-1);min-width:0}
+ .entry-tour .tour-sheet-tabs button{height:32px;padding:0 var(--sp-3);border:0;border-radius:var(--r-sm);background:transparent;color:var(--c-muted);font:inherit;font-size:var(--fs-ui);font-weight:var(--fw-semibold);cursor:pointer}
+ .entry-tour .tour-sheet-tabs button[aria-selected=true]{background:var(--c-selected);color:var(--c-ink)}
+ .entry-tour .tour-panel-title,.entry-tour .tour-panel-fold,.entry-tour .tour-float{display:none!important}
+ :root .entry-tour .tour-panel{display:flex!important}
+ :root .entry-tour .tour-memo-panel[hidden]:not([data-sheet-off]){display:flex!important}
+ :root .entry-tour .tour-dock{bottom:calc(min(54dvh,560px) + 28px)!important}
+}
+.cr-tour-canvas[data-backdrop]{pointer-events:none}
+.entry-tour .tour-memo-panel.shell-page{min-height:0!important;padding:0!important;background:var(--c-surface)!important}
+@media(max-width:900px){:root .entry-tour .tour-memo-panel.shell-page{position:fixed!important;top:auto!important;left:12px!important;right:12px!important;bottom:max(12px,env(safe-area-inset-bottom,0px))!important;width:auto!important;height:min(54dvh,560px)!important;min-height:0!important;border-radius:20px!important;box-shadow:var(--sh-panel)}}
