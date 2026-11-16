@@ -254,3 +254,49 @@
 @media(min-width:761px){
  :root .entry-page .welcome-card,:root .entry-page .entry-choice-card{bottom:max(48px,calc(16vh / var(--z,1)))}
 }
+
+/* ════ 클린룸 공부하기 — 블렌더 3D 공간 ════ */
+.cr-tour-canvas{position:fixed;inset:0;z-index:0;background:#e9edf2}
+.cr-tour-canvas canvas{display:block;width:100%!important;height:100%!important}
+.cr-tour-canvas .cr-tour-status{position:fixed;top:132px;left:50%;transform:translateX(-50%);z-index:3;display:flex;align-items:center;gap:var(--sp-2);height:36px;margin:0;padding:0 var(--sp-4) 0 var(--sp-3);border-radius:var(--r-pill);background:var(--c-surface);box-shadow:var(--sh-float);color:var(--c-ink-2);font-size:var(--fs-caption);font-weight:var(--fw-medium);white-space:nowrap}
+.cr-tour-canvas .cr-tour-status::before{content:'';width:14px;height:14px;border-radius:50%;border:2px solid var(--c-line);border-top-color:var(--c-accent);animation:glb-spin .8s linear infinite}
+.cr-tour-canvas .cr-tour-status[data-state=error]::before{width:8px;height:8px;border:0;background:#e5484d;animation:none}
+@keyframes glb-spin{to{transform:rotate(360deg)}}
+.entry-tour .entry-vignette{opacity:0}
+.entry-tour .cr-block{display:flex;flex-direction:column;gap:var(--sp-2);margin:var(--sp-4) 0 0;padding:var(--sp-4) 0 0;border-top:1px solid var(--c-line)}
+.entry-tour .cr-block h2,.entry-tour .cr-part h2{margin:0;font-size:var(--fs-caption);font-weight:var(--fw-semibold);color:var(--c-muted);letter-spacing:.02em}
+.cr-gown{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-2);margin:0;padding:0;list-style:none}
+.cr-gown button{display:flex;align-items:center;gap:var(--sp-2);width:100%;height:40px;padding:0 var(--sp-2);border:1px solid var(--c-line);border-radius:var(--r-sm);background:var(--c-surface);color:var(--c-ink);font:inherit;font-size:var(--fs-ui);cursor:pointer;text-align:left}
+.cr-gown button:hover{background:var(--c-hover)}
+.cr-gown button[data-state=next]{border-color:var(--c-accent);box-shadow:inset 0 0 0 1px var(--c-accent)}
+.cr-gown button[data-state=locked]{color:var(--c-muted)}
+.cr-gown-num{display:grid;place-items:center;flex:none;width:20px;height:20px;border-radius:50%;background:var(--c-selected);font-size:11px;font-weight:var(--fw-bold)}
+.cr-gown button[data-state=done] .cr-gown-num{background:var(--c-accent);color:#fff}
+.cr-gown button[data-state=next] .cr-gown-num{background:var(--c-accent-soft);color:var(--c-accent-strong)}
+.cr-gown-num svg.bi{width:12px!important;height:12px!important}
+.cr-hint{margin:0;padding:var(--sp-2) var(--sp-3);border-radius:var(--r-sm);background:var(--c-accent-soft);color:var(--c-accent-strong);font-size:var(--fs-caption);line-height:1.5}
+.cr-row{display:flex;align-items:center;gap:var(--sp-3);flex-wrap:wrap}
+.cr-live{font-size:var(--fs-caption);color:var(--c-accent-strong);font-weight:var(--fw-semibold)}
+.cr-ok{display:inline-flex;align-items:center;gap:4px;font-size:var(--fs-caption);color:#2f9e5f;font-weight:var(--fw-semibold)}
+.cr-air{display:flex;flex-direction:column;gap:var(--sp-2);padding:var(--sp-3);border-radius:var(--r-md);background:var(--c-surface-2,var(--c-selected))}
+.cr-air p{margin:0;font-size:var(--fs-ui);font-weight:var(--fw-semibold);font-variant-numeric:tabular-nums}
+.cr-air[data-phase=blow] p{color:#d43f3f}
+.cr-air[data-phase=done] p{color:#2f9e5f}
+.cr-air-bar{height:6px;border-radius:3px;background:var(--c-line);overflow:hidden}
+.cr-air-bar i{display:block;height:100%;border-radius:inherit;background:var(--c-accent);transition:width .2s linear}
+.cr-chips,.cr-tools{display:flex;flex-wrap:wrap;gap:var(--sp-2);margin:0;padding:0;list-style:none}
+.cr-chips button,.cr-tools button{height:32px;padding:0 var(--sp-3);border:1px solid var(--c-line);border-radius:var(--r-pill);background:var(--c-surface);color:var(--c-ink-2);font:inherit;font-size:var(--fs-caption);font-weight:var(--fw-semibold);cursor:pointer}
+.cr-chips button:hover,.cr-tools button:hover{background:var(--c-hover)}
+.cr-chips button[aria-pressed=true],.cr-tools button[aria-pressed=true]{border-color:var(--c-accent);background:var(--c-accent-soft);color:var(--c-accent-strong)}
+.cr-part{margin:var(--sp-4) 0 0;padding:var(--sp-3) var(--sp-4) var(--sp-4);border-radius:var(--r-md);background:var(--c-accent-soft);animation:pop-in .16s var(--ease) both}
+.cr-part-head{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2)}
+.entry-tour .cr-part h2{font-size:var(--fs-body);color:var(--c-ink)}
+.cr-part p{margin:var(--sp-2) 0 0;font-size:var(--fs-ui);line-height:1.6;color:var(--c-ink-2)}
+.cr-part .cr-muted{color:var(--c-muted)}
+.cr-tip{display:flex;align-items:center;gap:var(--sp-2);margin:var(--sp-4) 0 0;font-size:var(--fs-caption);color:var(--c-muted)}
+.cr-tip svg.bi{width:14px!important;height:14px!important}
+.cr-tour-canvas{width:100%;height:calc(100vh / var(--z,1));height:calc(100dvh / var(--z,1))}
+
+/* 단계 표시: 3D 영역 가운데. 좁을 땐 현재 단계만 이름을 보여 줘요 */
+.entry-tour .tour-steps[data-compact] button:not([aria-current]){padding:0 var(--sp-2)}
+.entry-tour .tour-steps[data-compact] button:not([aria-current]) .tour-step-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}

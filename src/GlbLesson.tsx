@@ -4,7 +4,7 @@ import './glb-lesson.css';
 import {StudyHub} from './StudyHub';
 import {readLessonNote,writeLessonNote} from './lessonNoteStore';
 import {LessonTitle} from './LessonTitle';
-import {useLessonShell,PanelToggle,ShellChips,CanvasToolbar} from './LessonShell';
+import {useLessonShell,PanelToggle,ShellChips,CanvasToolbar,toggleShellPanel} from './LessonShell';
 import './lesson-workbench.css';
 import {Icon} from './Icon';
 import {GlbStage,type PlayState,type CircuitState,type CircuitKey} from './GlbStage';
@@ -40,6 +40,8 @@ export function GlbLesson({id,onExit,onMission,onSwitch,profile,right,extra}:{id
  const STEPS=def.area==='설계'?'학습 단계':'공정 단계',PARTS=def.area==='설계'?'구성 설명':'기계 설명';
  const[searching,setSearching]=useState(false),[query,setQuery]=useState(''),[pickOpen,setPickOpen]=useState(false),[shot,setShot]=useState<{part:GlbPart;url:string}|null>(null);const q=query.trim().toLowerCase();
  const[tab,setTab]=useState<'steps'|'parts'>('steps'),[present,setPresent]=useState<GlbPart[]>([]),[focus,setFocus]=useState<{part:GlbPart;n:number}|null>(null);
+ /* 3D에서 부품을 누르면 왼쪽 패널이 '기계 설명' 탭으로 바뀌고 그 부품 카드가 열려요(패널이 접혀 있으면 펼쳐요) */
+ const pickPart=(p:GlbPart|null)=>{setPart(p);if(!p)return;setTab('parts');setSearching(false);if(shell.collapsed.left)toggleShellPanel('left')};
  const[circuit,setCircuit]=useState<CircuitState>({closed:false,high:false,a:false,b:false});
  const[seen,setSeen]=useState<Set<string>>(()=>new Set());
  const heading=useRef<HTMLHeadingElement>(null);
@@ -87,7 +89,7 @@ export function GlbLesson({id,onExit,onMission,onSwitch,profile,right,extra}:{id
   <div className="glb-grid shell-grid">
    <section className="glb-visual shell-center" aria-label="3D 학습 공간">
     <GlbStage src={src} label={`${def.title} · ${stage.title} 3D 모형`} play={stage.play} paused={paused} replay={replay} reset={reset} parts={def.parts}
-     interact={stage.interact} circuit={circuit} demo={demo} clear={clear} focus={focus} onParts={setPresent} onShot={(pt,url)=>setShot({part:pt,url})} onToggle={toggle} onState={setPlay} onPick={setPart} progress={progressRef} seek={seekRef}/>
+     interact={stage.interact} circuit={circuit} demo={demo} clear={clear} focus={focus} onParts={setPresent} onShot={(pt,url)=>setShot({part:pt,url})} onToggle={toggle} onState={setPlay} onPick={pickPart} progress={progressRef} seek={seekRef}/>
     <div className="glb-player" role="group" aria-label="단계 재생">
      <button type="button" className="glb-icon" aria-label="이전 단계" data-tip="이전 단계" data-tip-pos="bottom" disabled={step===0} onClick={()=>go(step-1)}><Icon name="chevron-left"/></button>
      <span className="glb-player-title"><b>{String(step+1).padStart(2,'0')}</b><span>{stage.title}</span></span>
