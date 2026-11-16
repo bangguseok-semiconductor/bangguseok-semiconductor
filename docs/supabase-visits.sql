@@ -16,6 +16,9 @@ alter table public.visits enable row level security;
 drop policy if exists "visitors can add a visit" on public.visits;
 create policy "visitors can add a visit" on public.visits for insert to anon with check (true);
 -- select 정책이 없으므로 사이트(anon 키)로는 기록을 읽을 수 없어요.
+grant usage on schema public to anon;
+grant insert on public.visits to anon;
+revoke select, update, delete on public.visits from anon;
 
 -- 2) 관리자 비밀번호: 공개되지 않는 private 스키마에 해시로만 저장
 create schema if not exists private;

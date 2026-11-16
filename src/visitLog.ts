@@ -2,8 +2,8 @@
    - URL과 anon 키는 공개돼도 되는 값이에요(브라우저용). 읽기는 막혀 있고, 관리자 비밀번호를 아는 사람만
      admin_visits 함수로 기록을 볼 수 있어요. 표·함수 만드는 SQL: docs/supabase-visits.sql
    - 아래 두 값이 비어 있으면 아무것도 보내지 않아요. */
-export const SUPABASE_URL='';
-export const SUPABASE_ANON_KEY='';
+export const SUPABASE_URL='https://zbqspwikxwxtiptjreet.supabase.co';
+export const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpicXNwd2lreHd4dGlwdGpyZWV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ4MDg3NTcsImV4cCI6MjExMDM4NDc1N30.NeE5kXmJYna7bs0eaziNKP7O-Z11PPsL4f4IYPRi-Qw';
 export const visitLogReady=()=>!!(SUPABASE_URL&&SUPABASE_ANON_KEY);
 export type Visit={id:number;created_at:string;organization:string|null;nickname:string;user_agent:string|null};
 const headers=()=>({apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`,'Content-Type':'application/json'});
