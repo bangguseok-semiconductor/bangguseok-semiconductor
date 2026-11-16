@@ -5,6 +5,7 @@ import {Icon} from './Icon';
 export type ConceptTopic={
  id:string;
  title:string;
+ summary?:string;/* 화면에 보여 주는 짧은 설명 (두세 문장) */
  definition:string;
  principle:string;
  connection:string;
@@ -35,18 +36,11 @@ export function ConceptPanel({topics,currentId,onNotes,openSignal=0}:Props){
  const panelId=useId(),panelRoot=useRef<HTMLElement>(null);
  useEffect(()=>{if(!openSignal)return;requestAnimationFrame(()=>panelRoot.current?.querySelector('.concept-item.is-current, .concept-item')?.scrollIntoView?.({block:'start',behavior:'smooth'}))},[openSignal]);
  if(!topics.length)return null;
- const safe=(t:ConceptTopic)=>t.sources.filter(source=>/^https:\/\//i.test(source.url));
  return <section ref={panelRoot} className="concept-panel concept-read" aria-labelledby={panelId+'-title'}>
   <h2 id={panelId+'-title'} className="concept-eyebrow">한눈에 이해하는 개념</h2>
   <ol className="concept-list">{topics.map((topic,index)=><li key={topic.id} className={'concept-item'+(topic.id===currentId?' is-current':'')} aria-current={topic.id===currentId?'true':undefined}>
    <div className="concept-item-head"><span className="concept-num">{String(index+1).padStart(2,'0')}</span><h3>{topic.title}</h3>{topic.id===currentId&&<span className="concept-now">지금 보는 내용</span>}</div>
-   <p className="concept-definition">{topic.definition}</p>
-   <dl className="concept-facts">
-    <div><dt>원리</dt><dd>{topic.principle}</dd></div>
-    <div><dt>장면 연결</dt><dd>{topic.connection}</dd></div>
-    <div className="concept-caution"><dt>헷갈리는 점</dt><dd>{topic.misconception}</dd></div>
-   </dl>
-   {safe(topic).length>0&&<p className="concept-refs">{safe(topic).map((source,k)=><a key={source.url} href={source.url} target="_blank" rel="noopener noreferrer">{source.label}<Icon name="box-arrow-up-right" className="trail"/><span className="concept-sr-only"> (새 창)</span>{k<safe(topic).length-1?'':''}</a>)}</p>}
+   <p className="concept-definition">{topic.summary??topic.definition}</p>
   </li>)}</ol>
   {onNotes&&<button type="button" className="concept-notes" onClick={onNotes}>내 메모에 정리하기<Icon name="journal-text" className="trail"/></button>}
  </section>;

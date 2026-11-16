@@ -2,16 +2,16 @@ import {useEffect,useRef,useState} from 'react';
 import {uiZoom} from './uiZoom';
 import {CleanroomTour,type TourApi,type TourPart,type GownStep,type TourLayers} from './CleanroomTour';
 import './welcome.css';
+import {Icon} from './Icon';
 import {ConceptPanel} from './ConceptPanel';
 import {cleanroomConcepts} from './conceptTopics';
-import {Icon} from './Icon';
 import {StudyHub} from './StudyHub';
 import {readLessonNote,writeLessonNote} from './lessonNoteStore';
 export type Visitor={organization:string;nickname:string};
 const reduced=()=>typeof window.matchMedia==='function'&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 /* 클린룸 공부하기 4단계 — 블렌더 체험 공간(07)의 웨이포인트와 1:1 */
 const points=[
- {step:'방진복 착용',label:'갱의실',title:'방진복 입기',text:'사람 몸에서 나오는 머리카락·피부 각질·침방울은 클린룸의 가장 큰 오염원이에요. 위에서부터 아래로, 정해진 순서대로 입어야 앞에서 입은 옷을 다시 더럽히지 않아요. 순서를 누르거나 아바타의 옷을 눌러 보세요.'},
+ {step:'방진복 착용',label:'갱의실',title:'방진복 입기',text:'사람 몸에서 나오는 머리카락·피부 각질·침방울은 클린룸의 가장 큰 오염원이에요. 위에서부터 아래로, 정해진 순서대로 입어야 앞에서 입은 옷을 다시 더럽히지 않아요. 아래 순서를 눌러 입혀 보세요.'},
  {step:'에어샤워실로',label:'복도',title:'에어샤워실로 이동',text:'바닥의 화살표를 따라 에어샤워실로 가요. 복도 창으로 클린룸 안을 미리 볼 수 있어요.'},
  {step:'에어샤워',label:'에어샤워',title:'에어샤워로 먼지 털기',text:'양쪽 벽 노즐에서 빠른 바람이 나와 방진복 표면의 먼지를 날려 보내요. 분사가 끝날 때까지 입구문과 출구문은 동시에 열리지 않아요(인터록).'},
  {step:'클린룸',label:'클린룸',title:'클린룸 둘러보기',text:'천장의 FFU가 걸러 낸 공기를 위에서 아래로 곧게 내려보내(수직 층류) 입자를 바닥으로 밀어내요. 아래 버튼으로 보이는 것을 바꿔 보세요.'},
@@ -57,7 +57,7 @@ export function Welcome({visitor,onVisitor,onContinue,startAt='welcome',menu}:{v
  const select=(i:number)=>{setPoint(i);setPart(null);setGownHint('');setSeen(v=>v.includes(i)?v:[...v,i])};
  const topHeader=<header className="entry-top"><span className="entry-brand"><span className="entry-mvp" title="최소 기능 제품 버전">MVP</span><span className="entry-wordmark">THE FIRST FAB <i>방구석 반도체</i></span></span><div><span className="entry-prototype">시제품 · 계정 인증 없음</span><button onClick={()=>setPlaying(p=>!p)} aria-pressed={!playing}>{playing?'배경 일시정지':'배경 재생'}</button>{menu}</div></header>;
  return <main className={'entry-page entry-'+screen}>
-  {screen==='tour'?<CleanroomTour key={reset} step={point} layers={layers} selected={part?.key??null} api={tourApi} motion={motion} onPart={onTourPart} onReady={setGownSteps} onGown={g=>setGownPlaying(g.playing)} onAir={onAir}/>:<CleanroomTour key={'bd'+reset} backdrop step={4} layers={{...layers,airflow:false,cleanliness:false}} motion={motion} paused={!playing}/>}
+  {screen==='tour'?<CleanroomTour key={reset} pickable={false} step={point} layers={layers} selected={part?.key??null} api={tourApi} motion={motion} onPart={onTourPart} onReady={setGownSteps} onGown={g=>setGownPlaying(g.playing)} onAir={onAir}/>:<CleanroomTour key={'bd'+reset} backdrop step={4} layers={{...layers,airflow:false,cleanliness:false}} motion={motion} paused={!playing}/>}
   <div className="entry-vignette"/>
   {screen==='tour'?null:topHeader}
   {screen==='welcome'?<section className="welcome-card"><div className="guide-portrait"><img src="/entry-guide.png" alt="흰 후드와 마스크를 착용한 가상의 연구원 캐릭터"/></div><div className="welcome-copy"><h1 ref={heading} tabIndex={-1}>방구석 반도체</h1><p className="entry-english">The First Fab</p><p className="entry-intro">처음 만나는 반도체의 세계.<br/>둘러보고, 만져보고, 나만의 발견을 시작하세요.</p><form noValidate onSubmit={e=>{e.preventDefault();if(!visitor.nickname.trim()){setNicknameError(true);nicknameInput.current?.focus();return}setScreen('choice')}}><label>소속 <small>선택</small><input autoComplete="off" maxLength={60} placeholder="입력하지 않아도 시작할 수 있어요" value={visitor.organization} onChange={e=>onVisitor({...visitor,organization:e.target.value})}/></label><label>닉네임 <small className="entry-required">필수</small><input ref={nicknameInput} autoComplete="off" maxLength={30} required aria-required="true" aria-invalid={nicknameError} aria-describedby={nicknameError?'nickname-error':undefined} placeholder="어떻게 불러드릴까요?" value={visitor.nickname} onChange={e=>{onVisitor({...visitor,nickname:e.target.value});if(e.target.value.trim())setNicknameError(false)}}/></label>{nicknameError&&<p id="nickname-error" className="entry-field-error" role="alert">닉네임을 입력해야 시작할 수 있어요.</p>}<button className="entry-start" type="submit">시작하기</button></form></div></section>:
@@ -92,7 +92,7 @@ export function Welcome({visitor,onVisitor,onContinue,startAt='welcome',menu}:{v
     {part&&<article className="cr-part" aria-live="polite"><div className="cr-part-head"><h2>{part.label}</h2><button type="button" className="glb-icon" aria-label="설명 닫기" onClick={()=>setPart(null)}><Icon name="x-lg"/></button></div>{part.desc?<p>{part.desc}</p>:<p className="cr-muted">화면에서 이 장비를 눌러 자세한 설명을 볼 수 있어요.</p>}</article>}
     
     <div className="tour-actions">{point<points.length-1?<button type="button" className="tour-primary" onClick={()=>select(point+1)}>다음 단계</button>:<button type="button" className="tour-primary" onClick={requestContinue}>실습 선택하기</button>}{point<points.length-1&&<button type="button" className="tour-secondary" onClick={requestContinue}>실습 선택하기</button>}</div>
-    <div className="tour-inline-study shell-page"><ConceptPanel topics={cleanroomConcepts} contextLabel="클린룸 둘러보기 개념"/>
+    <div className="tour-inline-study shell-page"><ConceptPanel topics={cleanroomConcepts}/>
     </div>
    </div></aside>
    <aside id="tour-memo-panel" className="tour-memo-panel shell-page" hidden={!memoOpen&&vw>900} data-sheet-off={sheetTab!=='memo'||undefined} aria-label="메모"><div className="tour-panel-head tour-memo-head2"><span className="tour-panel-title">학습 메모</span><div className="tour-sheet-tabs" role="tablist" aria-label="패널 보기"><button type="button" role="tab" aria-selected={sheetTab==='info'} onClick={()=>setSheetTab('info')}>학습 정보</button><button type="button" role="tab" aria-selected={sheetTab==='memo'} onClick={()=>setSheetTab('memo')}>메모</button></div>{vw>900&&menu}<button type="button" className="tour-collapse tour-panel-fold" aria-label="메모 접기" aria-expanded="true" aria-controls="tour-memo-panel" data-tip="메모 접기" data-tip-pos="bottom" onClick={()=>setMemoOpen(false)}><Icon name="layout-sidebar-reverse"/></button></div><StudyHub lesson="cleanroom" primary={{label:'클린룸 공부하기 메모',value:note.text,updated:note.updated,failed:note.failed,onChange:text=>setNote(writeLessonNote('cleanroom',text))}}/></aside>

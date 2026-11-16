@@ -375,3 +375,10 @@
 :root .entry-tour .cr-gown{gap:var(--sp-2) var(--sp-2)}
 :root .entry-tour .cr-hint{margin-top:var(--sp-1)}
 .entry-tour .tour-inline-study.shell-page{height:auto!important;max-height:none!important;overflow:visible!important}
+/* 한눈에 이해하는 개념: 제목 + 짧은 설명 */
+.entry-tour .cr-basics{display:flex;flex-direction:column;gap:var(--sp-3);margin-top:var(--sp-5);padding-top:var(--sp-5);border-top:1px solid var(--c-line)}
+.entry-tour .cr-basics>h2{margin:0;font-size:var(--fs-caption);font-weight:var(--fw-semibold);color:var(--c-muted);letter-spacing:.02em}
+.entry-tour .cr-basics ol{display:flex;flex-direction:column;gap:var(--sp-5);margin:0;padding:0;list-style:none}
+.entry-tour .cr-basics h3{display:flex;align-items:baseline;gap:var(--sp-2);margin:0 0 var(--sp-1);font-size:var(--fs-body);font-weight:var(--fw-semibold);line-height:1.45;color:var(--c-ink);letter-spacing:0}
+.entry-tour .cr-basics h3 span{flex:none;font-size:var(--fs-caption);font-weight:var(--fw-semibold);color:var(--c-accent-strong);font-variant-numeric:tabular-nums}
+.entry-tour .cr-basics p{margin:0;padding-left:calc(var(--fs-caption) * 1.5 + var(--sp-2));font-size:var(--fs-body);line-height:1.65;color:var(--c-ink-2)}

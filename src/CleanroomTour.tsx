@@ -24,7 +24,7 @@ const NON_SOLID_ROLES=['zone','effect','indicator','label_anchor','nav','trigger
 const WAYPOINTS=['WP_STEP01_Gowning','WP_STEP02_Corridor','WP_STEP03_AirShower','WP_STEP04_Cleanroom','WP_STEP05_Fab'];
 const LAYERS:(keyof TourLayers)[]=['equipment','airflow','cleanliness','ffu'];
 
-type Props={step:number;layers:TourLayers;selected?:string|null;onPart?:(p:TourPart|null)=>void;onReady?:(steps:GownStep[])=>void;onGown?:(state:{order:number;playing:boolean})=>void;onAir?:(t:number|null)=>void;api?:{current:TourApi|null};motion?:boolean;backdrop?:boolean;paused?:boolean};
+type Props={step:number;layers:TourLayers;selected?:string|null;onPart?:(p:TourPart|null)=>void;onReady?:(steps:GownStep[])=>void;onGown?:(state:{order:number;playing:boolean})=>void;onAir?:(t:number|null)=>void;api?:{current:TourApi|null};motion?:boolean;backdrop?:boolean;paused?:boolean;pickable?:boolean};
 
 export function CleanroomTour(props:Props){
  const host=useRef<HTMLDivElement>(null),p=useRef(props);p.current=props;
@@ -105,7 +105,7 @@ export function CleanroomTour(props:Props){
 
   /* 끌어서 둘러보기 · 클릭으로 부품 고르기 */
   const ray=new THREE.Raycaster(),ndc=new THREE.Vector2();let drag:{x:number;y:number;yaw:number;pitch:number;moved:boolean}|null=null;
-  const hit=(cx:number,cy:number)=>{const r=renderer.domElement.getBoundingClientRect();ndc.set(((cx-r.left)/r.width)*2-1,-((cy-r.top)/r.height)*2+1);ray.setFromCamera(ndc,camera);
+  const hit=(cx:number,cy:number)=>{if(p.current.pickable===false)return null;const r=renderer.domElement.getBoundingClientRect();ndc.set(((cx-r.left)/r.width)*2-1,-((cy-r.top)/r.height)*2+1);ray.setFromCamera(ndc,camera);
    const hits=ray.intersectObjects(scene.children,true);for(const h of hits){if(!h.object.visible)continue;let o:THREE.Object3D|null=h.object;while(o){if(pickables.includes(o))return o;o=o.parent}if(h.distance<40)return null}return null};
   const cv=renderer.domElement;cv.style.touchAction='none';cv.style.cursor='grab';
   const down=(e:PointerEvent)=>{if(e.button!==0)return;cv.setPointerCapture(e.pointerId);drag={x:e.clientX,y:e.clientY,yaw:look.tyaw,pitch:look.tpitch,moved:false};cv.style.cursor='grabbing'};
