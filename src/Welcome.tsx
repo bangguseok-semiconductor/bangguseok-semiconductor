@@ -37,8 +37,9 @@ export function Welcome({visitor,onVisitor,onContinue,startAt='welcome',menu}:{v
  useEffect(()=>{const on=()=>setVw(window.innerWidth);window.addEventListener('resize',on);return()=>window.removeEventListener('resize',on)},[]);
  /* 3D 화면에서 패널을 뺀 영역의 가운데 (UI 줌을 반영한 CSS px). 좁으면 단계 이름은 현재 것만 */
  const MEMO_W=340;
- const sceneMid=()=>{const full=vw/uiZoom();if(vw<=900)return full/2;const l=tourOpen?fitTour(tourW)+12:0,r=memoOpen?MEMO_W+12:0;return l+(full-l-r)/2};
- const stepsCompact=vw<=600||vw>900&&(vw/uiZoom()-(tourOpen?fitTour(tourW)+12:0)-(memoOpen?MEMO_W+12:0))<640;
+ /* 패널을 접어도 단계 카드·도구 막대는 제자리 (두 패널이 열린 기준 가운데) */
+ const sceneMid=()=>{const full=vw/uiZoom();if(vw<=900)return full/2;const l=fitTour(tourW)+12,r=MEMO_W+12;return l+(full-l-r)/2};
+ const stepsCompact=vw<=600||vw>900&&(vw/uiZoom()-fitTour(tourW)-MEMO_W-24)<640;
  const saveTour=(w:number)=>{setTourW(w);try{localStorage.setItem('semilab.tour.w',String(w))}catch{}};
  const[keysOpen,setKeysOpen]=useState(false);
  const requestContinue=()=>onContinue();
@@ -91,7 +92,7 @@ export function Welcome({visitor,onVisitor,onContinue,startAt='welcome',menu}:{v
     {part&&<article className="cr-part" aria-live="polite"><div className="cr-part-head"><h2>{part.label}</h2><button type="button" className="glb-icon" aria-label="설명 닫기" onClick={()=>setPart(null)}><Icon name="x-lg"/></button></div>{part.desc?<p>{part.desc}</p>:<p className="cr-muted">화면에서 이 장비를 눌러 자세한 설명을 볼 수 있어요.</p>}</article>}
     
     <div className="tour-actions">{point<points.length-1?<button type="button" className="tour-primary" onClick={()=>select(point+1)}>다음 단계</button>:<button type="button" className="tour-primary" onClick={requestContinue}>실습 선택하기</button>}{point<points.length-1&&<button type="button" className="tour-secondary" onClick={requestContinue}>실습 선택하기</button>}</div>
-    <div className="tour-inline-study shell-page"><ConceptPanel topics={cleanroomConcepts.filter(t=>t.id!=='cleanroom-contamination')} contextLabel="클린룸 둘러보기 개념"/>
+    <div className="tour-inline-study shell-page"><ConceptPanel topics={cleanroomConcepts} contextLabel="클린룸 둘러보기 개념"/>
     </div>
    </div></aside>
    <aside id="tour-memo-panel" className="tour-memo-panel shell-page" hidden={!memoOpen&&vw>900} data-sheet-off={sheetTab!=='memo'||undefined} aria-label="메모"><div className="tour-panel-head tour-memo-head2"><span className="tour-panel-title">학습 메모</span><div className="tour-sheet-tabs" role="tablist" aria-label="패널 보기"><button type="button" role="tab" aria-selected={sheetTab==='info'} onClick={()=>setSheetTab('info')}>학습 정보</button><button type="button" role="tab" aria-selected={sheetTab==='memo'} onClick={()=>setSheetTab('memo')}>메모</button></div>{vw>900&&menu}<button type="button" className="tour-collapse tour-panel-fold" aria-label="메모 접기" aria-expanded="true" aria-controls="tour-memo-panel" data-tip="메모 접기" data-tip-pos="bottom" onClick={()=>setMemoOpen(false)}><Icon name="layout-sidebar-reverse"/></button></div><StudyHub lesson="cleanroom" primary={{label:'클린룸 공부하기 메모',value:note.text,updated:note.updated,failed:note.failed,onChange:text=>setNote(writeLessonNote('cleanroom',text))}}/></aside>
