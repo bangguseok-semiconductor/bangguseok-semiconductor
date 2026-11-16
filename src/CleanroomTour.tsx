@@ -150,7 +150,7 @@ export function CleanroomTour(props:Props){
    const reduce=p.current.motion===false;const f=reduce?1:1-Math.pow(.0009,dt);look.yaw+=(look.tyaw-look.yaw)*f;look.pitch+=(look.tpitch-look.pitch)*f;
    if(p.current.backdrop){const t=performance.now()/1000,base=wpYaw[stepRef.current]??0;if(p.current.motion!==false&&!p.current.paused){look.tyaw=base+Math.sin(t*.11)*.32;look.tpitch=-.03+Math.sin(t*.07)*.04}
     /* 에어샤워를 쉬지 않고 되풀이 */
-    if(air&&!p.current.paused&&!air.isRunning()){if(!bdNext)bdNext=t+2.5;else if(t>=bdNext){air.reset().play();bdNext=0}}}
+    if(stepRef.current===2&&air&&!p.current.paused&&!air.isRunning()){if(!bdNext)bdNext=t+2.5;else if(t>=bdNext){air.reset().play();bdNext=0}}}
    else if(!move)walk(dt);
    camera.position.copy(pos);camera.position.y+=jumpY;camera.rotation.set(look.pitch,look.yaw,0,'YXZ');
    renderer.render(scene,camera)};
@@ -160,7 +160,7 @@ export function CleanroomTour(props:Props){
  useEffect(()=>{applyStep.current(props.step)},[props.step]);
  useEffect(()=>{applyLayers.current(props.layers)},[props.layers]);
  useEffect(()=>{applySel.current(props.selected)},[props.selected]);
- return <div ref={host} className="cr-tour-canvas" data-backdrop={props.backdrop||undefined} data-state={status} aria-label={props.backdrop?'에어샤워실 3D 배경':'클린룸 3D 공간 — 끌어서 둘러보고, 장비를 누르면 설명이 나와요'} role="img">
+ return <div ref={host} className="cr-tour-canvas" data-backdrop={props.backdrop||undefined} data-state={status} aria-label={props.backdrop?'반도체 팹 3D 배경':'클린룸 3D 공간 — 끌어서 둘러보고, 장비를 누르면 설명이 나와요'} role="img">
   {status!=='ready'&&!props.backdrop&&<p className="model-stage-status cr-tour-status" role="status" data-state={status}>{status==='error'?'3D 공간을 불러오지 못했어요':'클린룸을 불러오는 중이에요'}</p>}
  </div>;
 }

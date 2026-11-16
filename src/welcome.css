@@ -368,3 +368,9 @@
 .cr-tour-canvas[data-backdrop]{pointer-events:none}
 .entry-tour .tour-memo-panel.shell-page{min-height:0!important;padding:0!important;background:var(--c-surface)!important}
 @media(max-width:900px){:root .entry-tour .tour-memo-panel.shell-page{position:fixed!important;top:auto!important;left:12px!important;right:12px!important;bottom:max(12px,env(safe-area-inset-bottom,0px))!important;width:auto!important;height:min(54dvh,560px)!important;min-height:0!important;border-radius:20px!important;box-shadow:var(--sh-panel)}}
+/* 밝은 팹 배경 위에서도 머리줄 글자가 읽히도록 위쪽만 살짝 어둡게 */
+.entry-welcome .entry-vignette,.entry-choice .entry-vignette{background:linear-gradient(180deg,#14181ecc 0,#14181e59 90px,#14181e00 180px),radial-gradient(ellipse at center,#0000 55%,#0000002e 100%)!important}
+/* 다음 단계 · 실습 선택: 위 내용과 서로 간격 넉넉하게 */
+:root .entry-tour .tour-panel .tour-actions{gap:var(--sp-3);margin:var(--sp-6) 0 var(--sp-2)}
+:root .entry-tour .cr-gown{gap:var(--sp-2) var(--sp-2)}
+:root .entry-tour .cr-hint{margin-top:var(--sp-1)}
