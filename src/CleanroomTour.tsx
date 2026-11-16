@@ -20,6 +20,7 @@ export type TourApi={
  lookAt:(key:string)=>TourPart|null;                     /* 그 부품 쪽으로 시선 돌리기 */
  setPaused:(p:boolean)=>void;
 };
+const NON_SOLID_ROLES=['zone','effect','indicator','label_anchor','nav','trigger','waypoint'];const NON_SOLID_LAYERS=['airflow','cleanliness','trigger','light','sign'];
 const WAYPOINTS=['WP_STEP01_Gowning','WP_STEP02_Corridor','WP_STEP03_AirShower','WP_STEP04_Cleanroom','WP_STEP05_Fab'];
 const LAYERS:(keyof TourLayers)[]=['equipment','airflow','cleanliness','ffu'];
 
@@ -48,7 +49,7 @@ export function CleanroomTour(props:Props){
   const wp:THREE.Vector3[]=[];const wpYaw:number[]=[];
   const mixers:THREE.AnimationMixer[]=[];let envMix:THREE.AnimationMixer|null=null,avMix:THREE.AnimationMixer|null=null;
   const clips:Record<string,THREE.AnimationAction>={};let gown:THREE.AnimationAction|null=null,gownStop=Infinity,gownOrder=0;const gownSteps:GownStep[]=[];let air:THREE.AnimationAction|null=null;
-  const pickables:THREE.Object3D[]=[];const byKey=new Map<string,THREE.Object3D>();const layerNodes:Record<string,THREE.Object3D[]>={};
+  const pickables:THREE.Object3D[]=[];const solids:THREE.Object3D[]=[];const byKey=new Map<string,THREE.Object3D>();const layerNodes:Record<string,THREE.Object3D[]>={};
   let paused=false;
 
   const loader=new GLTFLoader();
@@ -59,7 +60,8 @@ export function CleanroomTour(props:Props){
     if(u.role==='nav'||u.role==='trigger'||u.role==='label_anchor')o.visible=u.role==='label_anchor'?o.visible:false;
     if(u.layer&&LAYERS.includes(u.layer))(layerNodes[u.layer]??=[]).push(o);
     if(u.label&&u.desc&&u.role!=='zone'&&u.role!=='waypoint'&&u.role!=='avatar_spawn'&&u.role!=='nav'&&u.role!=='trigger'){pickables.push(o);byKey.set(o.name,o)}
-    const m=(o as THREE.Mesh).material as THREE.MeshStandardMaterial|undefined;if(m&&'envMapIntensity' in m)m.envMapIntensity=.9});
+    const m=(o as THREE.Mesh).material as THREE.MeshStandardMaterial|undefined;if(m&&'envMapIntensity' in m)m.envMapIntensity=.9;
+    if((o as THREE.Mesh).isMesh){let a:THREE.Object3D|null=o,solid=true;while(a){const r=a.userData?.role,l=a.userData?.layer;if(NON_SOLID_ROLES.includes(r)||NON_SOLID_LAYERS.includes(l)){solid=false;break}a=a.parent}if(solid)solids.push(o)}});
    for(const n of WAYPOINTS){const o=room.scene.getObjectByName(n);const v=new THREE.Vector3();if(o)o.getWorldPosition(v);else v.set(0,1.6,-1-wp.length*5);wp.push(v);wpYaw.push(THREE.MathUtils.degToRad(o?.userData?.yaw_deg??0))}
    envMix=new THREE.AnimationMixer(room.scene);mixers.push(envMix);
    for(const c of room.animations){const a=envMix.clipAction(c);if(/loop/.test(c.name)||c.name==='guide_arrows'){a.setLoop(THREE.LoopRepeat,Infinity)}else{a.setLoop(THREE.LoopOnce,1);a.clampWhenFinished=true}clips[c.name]=a}
@@ -111,8 +113,30 @@ export function CleanroomTour(props:Props){
    cv.style.cursor=hit(e.clientX,e.clientY)?'pointer':'grab'};
   const up=(e:PointerEvent)=>{const d=drag;drag=null;cv.style.cursor='grab';if(!d||d.moved)return;const o=hit(e.clientX,e.clientY);
    if(!o){p.current.onPart?.(null);return}p.current.onPart?.(partOf(o))};
-  const keys=(e:KeyboardEvent)=>{const t=e.target as HTMLElement|null;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable))return;if(e.key==='ArrowLeft')look.tyaw+=.18;else if(e.key==='ArrowRight')look.tyaw-=.18;else return};
-  cv.addEventListener('pointerdown',down);cv.addEventListener('pointermove',moveH);cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',()=>{drag=null});window.addEventListener('keydown',keys);
+  /* 키보드로 걷기: WASD·방향키 이동, ←→(Q/E) 회전, Shift 달리기, Space 점프 */
+  const held=new Set<string>();let jumpY=0,jumpV=0;
+  const typing=(t:EventTarget|null)=>{const el=t as HTMLElement|null;return!!el&&(el.tagName==='INPUT'||el.tagName==='TEXTAREA'||el.tagName==='SELECT'||el.isContentEditable)};
+  const MOVE_KEYS=['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyQ','KeyE','ShiftLeft','ShiftRight'];
+  const keys=(e:KeyboardEvent)=>{if(typing(e.target)||e.metaKey||e.ctrlKey||e.altKey)return;
+   if(e.code==='Space'){const el=e.target as HTMLElement|null;if(el&&el!==document.body&&el.matches?.(':focus-visible')&&el.closest('button,a,[role=button],summary'))return;e.preventDefault();if(jumpY<=0&&jumpV===0)jumpV=3.1;return}
+   if(!MOVE_KEYS.includes(e.code))return;if(e.code.startsWith('Arrow'))e.preventDefault();held.add(e.code);if(move&&!e.code.startsWith('Shift'))move=null};
+  const keysUp=(e:KeyboardEvent)=>{held.delete(e.code)};const clearKeys=()=>held.clear();
+  window.addEventListener('keydown',keys);window.addEventListener('keyup',keysUp);window.addEventListener('blur',clearKeys);
+  /* 벽·장비에 부딪히면 멈추고, 문에 다가가면 열어 줘요 */
+  const wallRay=new THREE.Raycaster();wallRay.far=.45;const dirV=new THREE.Vector3(),orig=new THREE.Vector3();
+  const shown=(o:THREE.Object3D|null)=>{while(o){if(!o.visible)return false;o=o.parent}return true};
+  const blocked=(dx:number,dz:number)=>{const len=Math.hypot(dx,dz);if(!len||!solids.length)return false;dirV.set(dx/len,0,dz/len);wallRay.far=.42+len;
+   for(const h of [.85,.3]){orig.set(pos.x,pos.y-h,pos.z);wallRay.set(orig,dirV);for(const hit of wallRay.intersectObjects(solids,false)){if(!shown(hit.object))continue;
+    let a:THREE.Object3D|null=hit.object;while(a){if(/^G_Door/.test(a.name)&&clips.door_gowning&&!clips.door_gowning.isRunning()&&clips.door_gowning.time===0){clips.door_gowning.reset().play();break}if(/^PB_Door/.test(a.name)&&clips.door_photo&&!clips.door_photo.isRunning()&&clips.door_photo.time===0){clips.door_photo.reset().play();break}a=a.parent}
+    return true}}return false};
+  const walk=(dt:number)=>{let f=0,r=0,turn=0;
+   if(held.has('KeyW')||held.has('ArrowUp'))f++;if(held.has('KeyS')||held.has('ArrowDown'))f--;if(held.has('KeyD'))r++;if(held.has('KeyA'))r--;
+   if(held.has('ArrowLeft')||held.has('KeyQ'))turn++;if(held.has('ArrowRight')||held.has('KeyE'))turn--;
+   if(turn){look.tyaw+=turn*1.9*dt;look.yaw=look.tyaw}
+   if(f||r){const sp=(held.has('ShiftLeft')||held.has('ShiftRight')?3.6:1.9)*dt/Math.hypot(f,r),sy=Math.sin(look.yaw),cy=Math.cos(look.yaw);
+    const dx=(-sy*f+cy*r)*sp,dz=(-cy*f-sy*r)*sp;
+    if(!blocked(dx,dz)){pos.x+=dx;pos.z+=dz}else{if(dx&&!blocked(dx,0))pos.x+=dx;if(dz&&!blocked(0,dz))pos.z+=dz}}
+   if(jumpV!==0||jumpY>0){jumpV-=9.8*dt;jumpY+=jumpV*dt;if(jumpY<=0){jumpY=0;jumpV=0}}};
   cv.addEventListener('contextmenu',e=>e.preventDefault());
 
   const clock=new THREE.Clock();let lastAir=-1;
@@ -122,10 +146,11 @@ export function CleanroomTour(props:Props){
    if(air){const t=air.isRunning()?air.time:-1;if(t!==lastAir){lastAir=t;p.current.onAir?.(t>=0?t:null)}}
    if(move){const k=Math.min(1,(performance.now()-move.t0)/move.dur),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;pos.lerpVectors(from,to,e);pos.y=to.y+Math.sin(k*Math.PI*6)*.012*(1-k);if(k>=1)move=null}
    const reduce=p.current.motion===false;const f=reduce?1:1-Math.pow(.0009,dt);look.yaw+=(look.tyaw-look.yaw)*f;look.pitch+=(look.tpitch-look.pitch)*f;
-   camera.position.copy(pos);camera.rotation.set(look.pitch,look.yaw,0,'YXZ');
+   if(!move)walk(dt);
+   camera.position.copy(pos);camera.position.y+=jumpY;camera.rotation.set(look.pitch,look.yaw,0,'YXZ');
    renderer.render(scene,camera)};
   tick();
-  return()=>{disposed=true;cancelAnimationFrame(frame);ro.disconnect();window.removeEventListener('keydown',keys);if(p.current.api)p.current.api.current=null;renderer.dispose();pmrem.dispose();el.removeChild(renderer.domElement)};
+  return()=>{disposed=true;cancelAnimationFrame(frame);ro.disconnect();window.removeEventListener('keydown',keys);window.removeEventListener('keyup',keysUp);window.removeEventListener('blur',clearKeys);if(p.current.api)p.current.api.current=null;renderer.dispose();pmrem.dispose();el.removeChild(renderer.domElement)};
  },[]);
  useEffect(()=>{applyStep.current(props.step)},[props.step]);
  useEffect(()=>{applyLayers.current(props.layers)},[props.layers]);

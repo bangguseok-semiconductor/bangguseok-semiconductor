@@ -300,3 +300,23 @@
 /* 단계 표시: 3D 영역 가운데. 좁을 땐 현재 단계만 이름을 보여 줘요 */
 .entry-tour .tour-steps[data-compact] button:not([aria-current]){padding:0 var(--sp-2)}
 .entry-tour .tour-steps[data-compact] button:not([aria-current]) .tour-step-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* 내 학습 메모: 접는 상자 대신 늘 열린 한 덩어리 */
+.entry-tour .tour-memo{display:flex;flex-direction:column;gap:var(--sp-2);margin-top:var(--sp-5);padding-top:var(--sp-4);border-top:1px solid var(--c-line)}
+.entry-tour .tour-memo-head{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);min-height:32px}
+.entry-tour .tour-memo-head h2{margin:0;font-size:var(--fs-ui);font-weight:var(--fw-semibold);color:var(--c-ink);letter-spacing:0}
+.entry-tour .tour-memo-head .glb-icon:disabled{opacity:.35;cursor:default;background:transparent}
+.entry-tour .tour-memo textarea{display:block;width:100%;box-sizing:border-box;min-height:88px;max-height:320px;padding:var(--sp-3);border:1px solid var(--c-line);border-radius:var(--r-md);background:var(--c-surface-2);color:var(--c-ink);font:inherit;font-size:var(--fs-body);line-height:1.6;resize:none;outline:none;transition:border-color .15s,background .15s}
+.entry-tour .tour-memo textarea::placeholder{color:var(--c-muted)}
+.entry-tour .tour-memo textarea:hover{border-color:var(--c-line-strong,var(--c-line))}
+.entry-tour .tour-memo textarea:focus{border-color:var(--c-accent);background:var(--c-surface);box-shadow:0 0 0 3px var(--c-accent-soft)}
+.entry-tour .tour-memo-foot{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp-3);font-size:var(--fs-caption);color:var(--c-muted);line-height:1.5}
+.entry-tour .tour-memo-foot p{display:flex;gap:6px;margin:0;min-width:0}
+.entry-tour .tour-memo-foot p .bi{flex:none;width:14px;height:14px;margin-top:2px}
+.entry-tour .tour-memo-foot span{flex:none;font-variant-numeric:tabular-nums}
+
+/* 키보드 조작 안내 (도구 막대 위) */
+.entry-tour .tour-keys{position:absolute;bottom:calc(100% + var(--sp-2));left:50%;transform:translateX(-50%);display:grid;gap:var(--sp-2);margin:0;padding:var(--sp-3);min-width:184px;border-radius:var(--r-md);background:var(--c-surface);box-shadow:var(--sh-float);font-size:var(--fs-caption);color:var(--c-ink-2)}
+.entry-tour .tour-keys>div{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-4)}
+.entry-tour .tour-keys dt{display:flex;gap:3px}.entry-tour .tour-keys dd{margin:0;white-space:nowrap}
+.entry-tour .tour-keys kbd{min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;display:inline-grid;place-items:center;border:1px solid var(--c-line);border-bottom-width:2px;border-radius:5px;background:var(--c-surface-2);font:inherit;font-size:11px;font-weight:var(--fw-semibold);color:var(--c-ink)}
