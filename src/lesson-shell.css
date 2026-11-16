@@ -1076,3 +1076,10 @@ body.is-shot-dragging .note-rich-editor{box-shadow:inset 0 0 0 1px var(--c-accen
 .ws-marquee{position:fixed;z-index:60;border:1px solid var(--c-accent);border-radius:4px;background:color-mix(in srgb,var(--c-accent) 12%,transparent);pointer-events:none}
 body.is-marquee,body.is-marquee *{user-select:none!important;cursor:crosshair}
 .ws-main{position:relative}
+/* 손 모양 버튼 위 잠깐 안내 (6초 뒤 사라짐) */
+.canvas-dock{position:relative}
+.dock-hint{position:absolute;left:4px;bottom:calc(100% + 10px);z-index:5;padding:7px 12px;border-radius:var(--r-sm);background:var(--c-ink);color:var(--c-surface);font-size:var(--fs-caption);font-weight:var(--fw-medium);line-height:1.4;white-space:nowrap;box-shadow:var(--sh-float);pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .25s var(--ease),transform .25s var(--ease)}
+.dock-hint::after{content:'';position:absolute;top:100%;left:16px;border:6px solid transparent;border-top-color:var(--c-ink)}
+.dock-hint[data-on]{opacity:1;transform:none}
+.dock-hint:empty{padding:0}
+@media(prefers-reduced-motion:reduce){.dock-hint{transition:none}}

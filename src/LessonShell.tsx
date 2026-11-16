@@ -116,7 +116,10 @@ const isMac=typeof navigator!=='undefined'&&/Mac|iPhone|iPad/.test(navigator.pla
 export type ViewCaps={camera?:boolean;labels?:boolean;effects?:string};
 function ViewSwitch({on}:{on:boolean}){return <span className="view-switch" data-on={on} aria-hidden="true"><i/></span>}
 
-export function CanvasToolbar({tiles:own,view:caps={}}:{tiles:ToolTile[];view?:ViewCaps}){
+export function CanvasToolbar({tiles:own,view:caps={},hint='부품을 고르거나 3D 모형을 직접 눌러 보세요'}:{tiles:ToolTile[];view?:ViewCaps;hint?:string}){
+ /* 손 모양 버튼 위에 6초 동안 떴다 사라지는 안내 */
+ const[hintOn,setHintOn]=useState(!!hint);
+ useEffect(()=>{if(!hint)return;setHintOn(true);const t=setTimeout(()=>setHintOn(false),6000);return()=>clearTimeout(t)},[hint]);
  const[open,setOpen]=useState(false),[viewOpen,setViewOpen]=useState(false),root=useRef<HTMLDivElement>(null);
  const {collapsed}=useLessonShell(),focused=collapsed.left&&collapsed.right,opts=useViewOptions();
  /* 순서: 분해하기 · 보기 · 초기화(맨 오른쪽). 초기화는 시점도 기본으로 되돌려요 */
@@ -135,6 +138,7 @@ export function CanvasToolbar({tiles:own,view:caps={}}:{tiles:ToolTile[];view?:V
   </div>}
   {open&&<div id="canvas-adjust" className="canvas-popover" role="group" aria-label="조절">{tiles.map(t=><button key={t.id} data-tile={t.id} ref={t.buttonRef} type="button" className="tool-tile" aria-pressed={t.pressed} aria-expanded={t.id==='view'?viewOpen:undefined} aria-controls={t.id==='view'?'canvas-view':undefined} disabled={t.disabled} onClick={t.onClick}><Icon name={t.icon} size={20}/><span>{t.label}</span></button>)}</div>}
   <div className="canvas-dock" role="toolbar" aria-label="캔버스 도구">
+   {hint&&<span className="dock-hint" data-on={hintOn&&!open||undefined} role="status" aria-live="polite">{hintOn&&!open?hint:''}</span>}
    <button type="button" className="dock-btn dock-hand" aria-pressed={!open} aria-label="둘러보기" data-tip="둘러보기 · 드래그해서 돌려보기" data-tip-pos="top" onClick={()=>setOpen(false)}><Icon name="hand-index" size={20}/></button>
    <button type="button" className="dock-btn dock-adjust" aria-pressed={open} aria-expanded={open} aria-controls="canvas-adjust" aria-label="조절" data-tip="조절" data-tip-pos="top" onClick={()=>setOpen(o=>!o)}><Icon name="sliders" size={20}/></button>
   </div>

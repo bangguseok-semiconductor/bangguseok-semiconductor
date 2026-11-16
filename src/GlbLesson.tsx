@@ -104,7 +104,7 @@ export function GlbLesson({id,onExit,onMission,onSwitch,profile,right,extra}:{id
     {part&&tab==='steps'?<div className="glb-part-pop" role="status" aria-live="polite"><div><b>{part.name}</b><button type="button" className="glb-icon" aria-label="설명 닫기" onClick={()=>setClear(c=>c+1)}><Icon name="x-lg"/></button></div><p>{part.desc}</p></div>
      :null}
     {toast&&<p key={toast.n} className="glb-toast" role="status">{toast.text}</p>}
-    <CanvasToolbar tiles={[{id:'reset',label:'초기화',icon:'arrow-counterclockwise',onClick:()=>{setPaused(false);setReset(r=>r+1)}}]} view={{camera:true,labels:true}}/>
+    <CanvasToolbar hint="부품을 고르거나 3D 모형을 직접 눌러 보세요" tiles={[{id:'reset',label:'초기화',icon:'arrow-counterclockwise',onClick:()=>{setPaused(false);setReset(r=>r+1)}}]} view={{camera:true,labels:true}}/>
    </section>
 
    <section id="shell-panel-left" className="glb-guide shell-left">
@@ -133,7 +133,7 @@ export function GlbLesson({id,onExit,onMission,onSwitch,profile,right,extra}:{id
       {part.specs&&<dl>{part.specs.map(([k,v])=><div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>}
       <h4>핵심 설명</h4>
       <p>{part.desc}</p>
-     </article>:<p className="glb-partcard-empty"><Icon name="hand-index" className="lead"/>부품을 고르거나 3D 모형을 직접 눌러 보세요.</p>}
+     </article>:null}
     </div>:<>
     {def.tracks.length>1&&<div className="glb-tracks" role="tablist" aria-label="공정 방식">{def.tracks.map(t=><button key={t.id} type="button" role="tab" aria-selected={t.id===track} onClick={()=>switchTrack(t.id)}><b>{t.label}</b><small>{t.sub}</small></button>)}</div>}
     <ol className="guide-items glb-steps" aria-label="학습 단계">{stages.map((s,i)=>q&&!(s.title+' '+s.body).toLowerCase().includes(q)?null:<li key={s.file}><button type="button" className={i===step?'active':''} aria-current={i===step?'step':undefined} onClick={()=>go(i)}><span>{String(i+1).padStart(2,'0')}</span>{s.title}</button></li>)}</ol>

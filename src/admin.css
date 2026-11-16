@@ -32,3 +32,12 @@
 .admin-table td:first-child{white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--c-ink-2)}
 .admin-muted{color:var(--c-muted)}
 @media(max-width:540px){.admin-head{padding-left:16px}.admin-stats,.admin-tools,.admin-table-wrap{padding-left:16px;padding-right:16px}.admin-table td:last-child,.admin-table th:last-child{display:none}}
+
+.admin-check{width:28px;padding-right:0!important}.admin-check input{width:16px;height:16px;margin:0;accent-color:var(--c-accent);cursor:pointer}
+.admin-table tbody tr{cursor:pointer}.admin-table tbody tr:hover td{background:var(--c-hover)}.admin-table tbody tr[aria-selected=true] td{background:var(--c-accent-soft)}
+.admin-danger{color:var(--c-danger,#d9480f)}.admin-danger:hover:not(:disabled){background:color-mix(in srgb,var(--c-danger,#d9480f) 12%,transparent)}
+.admin-confirm{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 24px 12px;padding:12px 14px;border-radius:var(--r-md,12px);background:var(--c-surface-2);font-size:var(--fs-ui,13px)}
+.admin-confirm p{margin:0;line-height:1.5}.admin-confirm>div{display:flex;gap:4px;flex:none}
+.admin-del{height:32px;padding:0 14px;border:0;border-radius:var(--r-sm,8px);background:var(--c-danger,#d9480f);color:#fff;font:inherit;font-size:var(--fs-ui,13px);font-weight:600;cursor:pointer}
+.admin-note{margin:0 24px 12px;font-size:var(--fs-caption,12px);color:var(--c-muted)}
+@media(max-width:540px){.admin-confirm{flex-direction:column;align-items:stretch;margin:0 16px 12px}.admin-note{margin:0 16px 12px}}

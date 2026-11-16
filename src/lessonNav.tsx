@@ -79,6 +79,6 @@ export function SimpleParts({parts}:{parts:SimplePart[]}){
   {cur?<article className="glb-partcard"><h3>{cur.name}{cur.en&&<small>{cur.en}</small>}</h3>
    {cur.specs&&<dl>{cur.specs.map(([k,v])=><div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>}
    <h4>핵심 설명</h4><p>{cur.desc}</p></article>
-   :<p className="glb-partcard-empty"><Icon name="hand-index" className="lead"/>지금 화면에 보이는 부품을 골라 보세요.</p>}
+   :null}
  </div>;
 }
